@@ -19,7 +19,7 @@
 | [prompt-guard.sh](../.claude/hooks/prompt-guard.sh) | You submit a prompt | Blocks a prompt that contains a phone number, SIP URI, production catalog name or pasted raw record. |
 | [pretool-guard.sh](../.claude/hooks/pretool-guard.sh) | Before a Bash command | Blocks direct SQL, Genie One, non-dev bundle commands, `bundle destroy`, environment dumps, and Redis or EventBridge access. |
 | [jira-guard.sh](../.claude/hooks/jira-guard.sh) | Before an Atlassian call | Blocks a Jira or Confluence write that contains a phone number, SIP URI, secret or production catalog name. |
-| [posttool-reminder.sh](../.claude/hooks/posttool-reminder.sh) | After an edit to a code file | Reminds Claude to update the test and the prompt-pack row, without blocking. |
+| [posttool-reminder.sh](../.claude/hooks/posttool-reminder.sh) | After an edit to a code file | Reminds Claude to update the test, without blocking. |
 | [stop-secret-scan.sh](../.claude/hooks/stop-secret-scan.sh) | Claude finishes a turn | Blocks the turn if the diff or an untracked file contains a secret-shaped string. |
 
 ## Skills (`.claude/skills/`)
@@ -58,6 +58,5 @@
 |---|---|
 | [ai_usage_strategy.md](ai_usage_strategy.md) | The strategy: which tool does which job, the data boundary, and the review policy. |
 | [genie_agent_instructions.md](genie_agent_instructions.md) | The reviewed git copy of the Genie Space's instructions, with the Space ID and the steps to create one. |
-| [genie_prompt_pack.md](genie_prompt_pack.md) | The acceptance questions QA asks Genie, each with the table grain that counts as a correct answer. |
 | [databricks_validation_checklist.md](databricks_validation_checklist.md) | The checklist for re-proving that the Genie scope, deny rules and hooks still hold. |
 | [decisions/](decisions/) | The decision files (one per plan session, plus the field-scope cuts) that Claude must follow and may not invent around. |

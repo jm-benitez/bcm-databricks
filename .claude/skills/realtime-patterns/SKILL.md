@@ -17,7 +17,7 @@ not as the BCM field mapping.
 | `pr_ncj_build_avaya` (`AVAYA_NECTAR_DIAGNOSTICS`) | Two sources, clock skew (`fn_svc_ncj_avaya_nd_time_shift`), optional stitch by user, a buffer for related sessions | SILVER cross-source correlation — the plan's version is SkyConnect + CoreConnect assembly, then Sonus joined with a synthetic `correlation_id` | Cite it as the existing cross-source stitch. Do not copy Avaya or Diagnostics keys onto the plan's sources, and do not invent the synthetic id. |
 | `pr_ncj_load`, `pr_ncj_summary_build`, `pr_summary_dm_build` | Build journeys, then a summary grain, on a schedule with chunking and run logs | GOLD | Draft aggregates only after session 8 signs that grain. |
 | Nectar score functions and threshold configuration | A score and a threshold exist as data, not as constants in a query | SCORE, the threshold table, alert type 3 | Implement scoring from a signed threshold spec. |
-| QuickSight definitions | Questions the current UI already asks | The engineering Genie prompt pack | Turn a question into a regression prompt. Do not port the SQL dialect unchanged. |
+| QuickSight definitions | Questions the current UI already asks | A question to ask the engineering Genie Agent | Turn a question into a regression prompt. Do not port the SQL dialect unchanged. |
 
 Extract a pattern as a note (join list, stitch shape, scoring shape) — never
 as a finished field mapping or correlation key for BCM. A human decides which

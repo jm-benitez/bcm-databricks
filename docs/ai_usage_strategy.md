@@ -65,7 +65,7 @@ The realtime database is Nectar’s current PostgreSQL store. It already impleme
 | `pr_ncj_build_avaya` (`AVAYA_NECTAR_DIAGNOSTICS`) | Two sources, clock skew (`fn_svc_ncj_avaya_nd_time_shift`), optional stitch by user, a buffer for related sessions | SILVER cross-source correlation. The plan’s version of this task is SkyConnect + CoreConnect assembly, then Sonus joined with a synthetic `correlation_id` | Cite it as the existing cross-source stitch. Do not copy Avaya or Diagnostics keys onto the plan’s sources, and do not invent the synthetic id. |
 | `pr_ncj_load`, `pr_ncj_summary_build`, `pr_summary_dm_build` | Build journeys, then a summary grain, on a schedule with chunking and run logs | GOLD. The plan fixes Phase 1 at 4–5 rollup views and 3–4 dashboards, each at L0, L1, and L2 | Draft aggregates only after session 8 signs that grain. |
 | Nectar score functions and threshold configuration in the realtime database | A score and a threshold exist as data, not as constants in a query | SCORE, the threshold table, alert type 3 | Implement scoring from a signed threshold spec. |
-| QuickSight definitions in the realtime database | Questions the current UI already asks | The engineering Genie prompt pack | Turn a question into a regression prompt. Do not port the SQL dialect unchanged. |
+| QuickSight definitions in the realtime database | Questions the current UI already asks | A question to ask the engineering Genie Agent | Turn a question into a Genie question. Do not port the SQL dialect unchanged. |
 
 Alert workers, Redis, and EventBridge stay as they are. The plan’s discovery task for that area is a review of the existing Nectar alert worker and a key design (namespaces `device`, per-record, per-session; cooldown; leader election; EventBridge routing by alert type). Claude may draft that design from notes a human took in sessions 3 and 4. It does not redesign the workers in this phase.
 
@@ -103,7 +103,7 @@ Claude Code may:
 
 Claude Code may not mark a discovery question answered by generalizing from Avaya, Genesys, Webex Calling, or Diagnostics, and it may not pick SkyConnect over Nectar Diagnostics or the reverse.
 
-QA starts the Genie prompt pack in this phase, on paper, from the plan’s acceptance rows: classification and field mapping, enrich, each alert type, stitched session, unmatched legs, late legs, and a second partner invisible at L1/L2. The pack moves into the agent when dev tables exist.
+QA lists the plan’s acceptance rows in this phase, on paper: classification and field mapping, enrich, each alert type, stitched session, unmatched legs, late legs, and a second partner invisible at L1/L2. QA asks them of the engineering agent, ticket by ticket, once dev tables exist.
 
 ### Design
 
@@ -126,13 +126,13 @@ A human reviews the design note before implementation starts. The notebook assis
 
 Phase 2 of the plan (5 Oct – 7 Dec 2026) is the build. Claude Code implements from the signed decision and the design note.
 
-Plan milestones are when the prompt pack for that slice must already pass in dev: week 6 (Bronze for all three confirmed sources, alert type 1), week 9 (enrich, score, Silver assembly), week 11 (cross-source Silver, Gold), week 14 (volume run finished, dashboards and the Lakebase path ready for the UI). Claude does not declare a milestone met. QA does, from the pack and the automated tests.
+QA verifies the implementation of each ticket by asking the engineering agent questions about the tables that ticket produced. Claude does not declare a ticket verified. QA does, from those answers and the automated tests.
 
-When a stage is in the dev catalog, the author asks the engineering agent the prompt-pack questions for that stage and pastes the question, the generated SQL, and the result grain into the merge request. QA asks the same questions from their own login. The two answers should match. A mismatch is a defect in the pipeline or in the agent instructions, and someone fixes the instructions in the same request when the instructions were wrong.
+When a stage is in the dev catalog, the author asks the engineering agent verification questions for that ticket and pastes the question, the generated SQL, and the result grain into the merge request. QA asks the same questions from their own login. The two answers should match. A mismatch is a defect in the pipeline or in the agent instructions, and someone fixes the instructions in the same request when the instructions were wrong.
 
 ### Tests
 
-Acceptance checks come from the signed decisions and from the plan’s QA rows. Claude Code writes the automated tests for the rows that can pass on synthetic data. QA owns the Genie prompt pack and runs it after each dev deploy.
+Acceptance checks come from the signed decisions and from the plan’s QA rows. Claude Code writes the automated tests for the rows that can pass on synthetic data. After each dev deploy, QA asks the engineering agent questions to verify the implementation of the ticket.
 
 Test inputs checked into `bcm` are synthetic. They cover a multi-leg call, a device event, a registration failure, a late leg, an unmatched leg, a Sonus timestamp that is not UTC, a SkyConnect field that belongs in the cold archive and must be absent from the hot Bronze table, and a second partner that must be invisible at L1 and L2.
 
@@ -181,7 +181,6 @@ Instructions to seed once the producer list is confirmed:
 - Alert type 1 is a device event, counted before enrich. Alert type 2 is a per-record or registration result after enrich and before stitching. Alert type 3 is a session score after Silver.
 - Questions are scoped to a named partner and level (L0, L1, or L2). If the question names neither, the agent asks. A query that can see another partner at L1 or L2 is a wrong answer.
 - Column meanings for correlation, watermark, and score come from Unity Catalog comments. Those comments are maintained in `bcm` with the table definitions.
-- Example questions are the prompt pack. Each example includes the SQL grain that counts as a correct answer.
 
 When an answer is wrong, the person who noticed it updates the instructions or the example SQL in `bcm` and says so in the merge request. That is how the agent improves. Correcting it in the workspace UI alone is not enough, because the next person will not see the change in review.
 
@@ -244,8 +243,7 @@ and name the session.
 Do not print or write production CDR, phone numbers, or SIP URIs.
 Dev data questions go to the engineering Genie Agent.
 
-Add or update the automated test and the Genie prompt-pack entry for
-the behavior you changed.
+Add or update the automated test for the behavior you changed.
 
 Do not commit secrets. Do not weaken a Unity Catalog grant. Do not
 query across partners except in a test that asserts the second partner
@@ -292,7 +290,7 @@ Skills are the extra instructions Claude loads when the task matches. They live 
 |---|---|---|
 | `decision-check` | A change touches classification, enrich, stitching, score, thresholds, or partner filters | The design in this repo is what to implement. A discovery note explains a choice the design has not absorbed yet. Stop and name the gap if neither records it |
 | `realtime-patterns` | Someone asks how Nectar does this today | The procedure map in this document: what to copy as a pattern, and which columns stay behind |
-| `genie-check` | A change is ready to check against dev data | How to ask the engineering agent, and how to update `docs/genie_prompt_pack.md` and the agent instructions in the same change |
+| `genie-check` | A change is ready to check against dev data | How to ask the engineering agent, and how to update the agent instructions in the same change |
 | `bundle-validate` | Tests or the Databricks bundle need a run | The dev-target validate command and the unit-test command. Production deploy is not in the skill |
 | `code-review` | A diff is ready to review, on the engineer’s machine or in the GitLab job | Starts the read-only reviewer below, applies the checklist and the test-coverage check in [Merge request review](#merge-request-review), and reports other observations separately. On the machine, findings stay in the terminal. In GitLab, the job posts them on the request |
 
@@ -305,7 +303,7 @@ Hooks in `.claude/settings.json` run even when Claude skips a rule in `CLAUDE.md
 | `SessionStart` | Adds a short reminder to the session: the design in this repo is the source of truth, the realtime database is evidence to mirror, rows are read through the dev Genie Agent, production payloads stay out of the prompt |
 | `UserPromptSubmit` | Blocks the turn when the prompt contains the production catalog name or a pasted CDR extract. The engineer masks the sample and continues |
 | `PreToolUse` on Bash | Blocks the permission-deny cases above when a deny rule is not enough. Bundle `deploy`, `run`, `bind`, `unbind` and `deployment` commands are allowed only with an explicit `dev` target, checked across the whole command so `-tprod`, `--target=prod` and `DATABRICKS_BUNDLE_TARGET` cannot slip past. `bundle destroy` is always blocked |
-| `PostToolUse` on Edit and Write | After a pipeline file changes, reminds the engineer to update the matching test and the Genie prompt-pack line. The turn still completes |
+| `PostToolUse` on Edit and Write | After a pipeline file changes, reminds the engineer to update the matching test. The turn still completes |
 | `Stop` | Runs a secret scanner on the diff and on untracked files, and blocks the turn on a match. The same gitleaks scanner runs in pre-commit and in the CI pipeline |
 
 `/hooks` shows the merged set. It does not edit it. Changes to hooks go through a merge request.
@@ -349,7 +347,7 @@ The review looks for:
 - A hot Bronze column the SkyConnect decision file assigned to the cold archive, or a CoreConnect column outside the signed 37-field set.
 - A Sonus timestamp kept in a local zone, or a synthetic `correlation_id` whose formula is not the session 7 decision.
 - A production catalog name, a secret, or a sample that looks like a real phone number or SIP URI.
-- A behavior change with no test and no prompt-pack update.
+- A behavior change with no test.
 - Logic copied from `pr_ncj_build_avaya` or `pr_u_dm_build_*` column names that the decision file does not adopt.
 
 The reviewer also checks that automated tests exist for the code being changed or added. For each changed path it reports whether a test in the diff covers it, only an untouched existing test covers it, or no test was found. A changed behavior with no test, or an existing test the change has made stale, is blocking.
@@ -364,7 +362,7 @@ Human approval remains required in GitLab. The Claude note does not count as tha
 
 Use it to draft or explain a single SQL statement against dev tables while exploring. The same data boundary applies.
 
-Pipeline code that will run on a schedule is written in `bcm` and reviewed on a merge request. SQL that the assistant produced is pasted into `bcm` by a person or by Claude Code, with the test and the prompt-pack update. A notebook saved only in the workspace is not the implementation.
+Pipeline code that will run on a schedule is written in `bcm` and reviewed on a merge request. SQL that the assistant produced is pasted into `bcm` by a person or by Claude Code, with the test. A notebook saved only in the workspace is not the implementation.
 
 ## Tests and CI, in one place
 
@@ -372,12 +370,9 @@ Pipeline code that will run on a schedule is written in `bcm` and reviewed on a 
 |---|---|---|---|
 | Classification, UTC timestamps, 85-field and 37-field scope, correlation, idempotent score, L0/L1/L2 filter | Claude Code from a signed decision; author edits | GitLab CI on the merge request | The synthetic fixtures produce the expected rows |
 | Databricks bundle validates | Author | GitLab CI | The asset bundle loads |
-| Genie prompt pack | QA, with engineers updating instructions when the answer is wrong | QA, as themselves, after the dev deploy | The SQL grain matches the expected grain for that question |
 | Claude review | The review policy in this document | GitLab CI, comment only | Author has answered every item they marked blocking |
 | Human review | A data engineer or QA who did not author the change | GitLab approval | The approver accepts the decision and the diff |
-| Schema Registry mapping, partner-isolation penetration, 48-hour 35M-record run, Phase 3 live completeness and correlation rates | QA, from the plan’s QA rows | QA on the dev or live workspace, outside Claude | The plan’s milestone can be marked done |
-
-QA’s prompt pack is a file in `bcm`, `docs/genie_prompt_pack.md`. Each line has the question, the partner and level it uses, the table grain, and the decision file it checks. The first entries, to be filled when the decisions exist, are: record-type counts per producer, hot-store field counts, device events absent from Silver, registration alerts present before a session exists, session score absent until Silver, late leg attached or explicitly unmatched, and zero rows for a second partner at L1 and L2.
+| Schema Registry mapping, partner-isolation penetration, 48-hour 35M-record run, Phase 3 live completeness and correlation rates | QA, from the plan’s QA rows | QA on the dev or live workspace, outside Claude | The plan item can be marked done |
 
 ## Before Phase 2
 
@@ -390,6 +385,5 @@ The plan’s build starts the week of 5 Oct 2026, after the discovery readout. B
 5. Open empty decision files for sessions 1 through 5, 7, and 8, plus the SkyConnect hot/cold cut and the CoreConnect 37-field scope, so a Claude session has somewhere to stop.
 6. Create the empty engineering Genie Agent in dev, shared with this group, with no tables attached yet.
 7. Connect Claude Code to that agent from one engineer’s machine and confirm a permissions failure on a production catalog, so the boundary is real.
-8. Add the prompt-pack headings in [Tests and CI](#tests-and-ci-in-one-place), with the expected grain left as “waiting on decision” until the session file is signed.
 
-Phase 2 merge requests follow the lifecycle above. New people read this document, the plan, and `bcm/CLAUDE.md` before their first Claude Code session. Session 6 and the UI team’s Lakebase work stay outside this strategy. Their written outcome is still an input when it changes a query or a prompt-pack question.
+Phase 2 merge requests follow the lifecycle above. New people read this document, the plan, and `bcm/CLAUDE.md` before their first Claude Code session. Session 6 and the UI team’s Lakebase work stay outside this strategy. Their written outcome is still an input when it changes a query.

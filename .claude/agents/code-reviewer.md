@@ -28,7 +28,7 @@ changed paths touch. Then check the diff against this list, verbatim from
   whose formula is not the session 7 decision.
 - A production catalog name, a secret, or a sample that looks like a real
   phone number or SIP URI.
-- A behavior change with no test and no `docs/genie_prompt_pack.md` update.
+- A behavior change with no test.
 - Logic copied from `pr_ncj_build_avaya` or `pr_u_dm_build_*` column names
   that the decision file does not adopt.
 - A Bash command or code path that reaches dev data through

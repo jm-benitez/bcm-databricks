@@ -35,9 +35,7 @@ databricks genie create-message --no-wait <SPACE_ID> <CONV_ID> "<follow-up>"
 
 1. Paste the question, the SQL Genie generated, and the result grain into the
    PR description.
-2. Update the matching row in `docs/genie_prompt_pack.md` (question, partner +
-   level, table grain, decision file it checks, status).
-3. If the answer was wrong because the agent's instructions were wrong, fix
+2. If the answer was wrong because the agent's instructions were wrong, fix
    `docs/genie_agent_instructions.md` in the same change, then push the same
    fix to the live Agent (`databricks genie update-space`, see the
    `databricks-genie-agents` skill from the installed `databricks` plugin)

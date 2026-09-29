@@ -41,8 +41,7 @@ asks first. Post design notes, decision-file names, and aggregates only,
 never Genie result rows, and do not transition or close a ticket unless
 asked.
 
-Add or update the automated test and the Genie prompt-pack entry for
-the behavior you changed.
+Add or update the automated test for the behavior you changed.
 
 Do not commit secrets. Do not weaken a Unity Catalog grant. Do not
 query across partners except in a test that asserts the second partner

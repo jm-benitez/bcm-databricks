@@ -46,7 +46,6 @@ have Bronze data today. CoreConnect and Sonus have no tables yet.
   tables get <catalog.schema.table>`, not invented here.
 - Never return a raw phone number, SIP URI, or other subscriber identifier in
   an answer; aggregate or mask it instead.
-- Example questions: see `docs/genie_prompt_pack.md`.
 
 <!-- TODO once more Bronze/Silver/Gold tables land in nectar.bronze/silver/gold:
      replace "not yet created" notes above with the real table names, attach
@@ -161,7 +160,7 @@ replaced with the "Instructions" section above, via `databricks genie
 update-space` with the exported `etag`. Tables, sample questions, title,
 warehouse and folder were left unchanged. The live text is that section with
 one adaptation, because the agent cannot read the repo: the pointers to
-`docs/genie_prompt_pack.md` and `databricks tables get` were dropped. The
+`databricks tables get` was dropped. The
 identifier rule is now in both copies. Wording may drift again on the next
 edit, so diff with `databricks genie get-space <SPACE_ID>
 --include-serialized-space` when in doubt.
