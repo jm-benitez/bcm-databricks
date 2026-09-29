@@ -287,11 +287,11 @@ Skills are the extra instructions Claude loads when the task matches. They live 
 
 | Skill | Loads when | What it tells Claude |
 |---|---|---|
-| `decisions` | A change touches classification, enrich, stitching, score, thresholds, or partner filters | The design in this repo is what to implement. A discovery note explains a choice the design has not absorbed yet. Stop and name the gap if neither records it |
+| `decision-check` | A change touches classification, enrich, stitching, score, thresholds, or partner filters | The design in this repo is what to implement. A discovery note explains a choice the design has not absorbed yet. Stop and name the gap if neither records it |
 | `realtime-patterns` | Someone asks how Nectar does this today | The procedure map in this document: what to copy as a pattern, and which columns stay behind |
 | `genie-check` | A change is ready to check against dev data | How to ask the engineering agent, and how to update `docs/genie_prompt_pack.md` and the agent instructions in the same change |
 | `bundle-validate` | Tests or the Databricks bundle need a run | The dev-target validate command and the unit-test command. Production deploy is not in the skill |
-| `code-review` | A diff is ready to review, on the engineer’s machine or in the GitLab job | Starts the read-only reviewer below and applies the checklist in [Merge request review](#merge-request-review). On the machine, findings stay in the terminal. In GitLab, the job posts them on the request |
+| `code-review` | A diff is ready to review, on the engineer’s machine or in the GitLab job | Starts the read-only reviewer below, applies the checklist and the test-coverage check in [Merge request review](#merge-request-review), and reports other observations separately. On the machine, findings stay in the terminal. In GitLab, the job posts them on the request |
 
 ### Hooks
 
@@ -301,7 +301,7 @@ Hooks in `.claude/settings.json` run even when Claude skips a rule in `CLAUDE.md
 |---|---|
 | `SessionStart` | Adds a short reminder to the session: the design in this repo is the source of truth, the realtime database is evidence to mirror, rows are read through the dev Genie Agent, production payloads stay out of the prompt |
 | `UserPromptSubmit` | Blocks the turn when the prompt contains the production catalog name or a pasted CDR extract. The engineer masks the sample and continues |
-| `PreToolUse` on Bash, Edit, and Write | Blocks the permission-deny cases above when a deny rule is not enough, including a write into the realtime-database checkout |
+| `PreToolUse` on Bash | Blocks the permission-deny cases above when a deny rule is not enough |
 | `PostToolUse` on Edit and Write | After a pipeline file changes, reminds the engineer to update the matching test and the Genie prompt-pack line. The turn still completes |
 | `Stop` | Runs a secret scanner on the diff and blocks the turn on a match. The same scanner runs in the GitLab test pipeline |
 
@@ -320,7 +320,7 @@ Streaming rules stay in `CLAUDE.md` rather than a skill per pipeline stage. Ther
 | | Discovery | Design | Development | Merge request |
 |---|---|---|---|---|
 | Tools | Read, Unity Catalog metadata | Read, Write, Unity Catalog metadata | Edit, Write, Bash, Genie, Unity Catalog | GitLab, to open the request. The review job is CI, not these tools |
-| Skills | `realtime-patterns`, `decisions` | `decisions` | `decisions`, `genie-check`, `bundle-validate`, then `code-review` before the request is opened | `code-review`, loaded by the CI job from the checkout |
+| Skills | `realtime-patterns`, `decision-check` | `decision-check` | `decision-check`, `genie-check`, `bundle-validate`, then `code-review` before the request is opened | `code-review`, loaded by the CI job from the checkout |
 | Hooks | `SessionStart`, `UserPromptSubmit` | Those, plus `PreToolUse` | The full set, including `Stop` | The CI job is comment-only, so `PreToolUse` still blocks a deploy or a secret read if that job’s prompt goes wide |
 
 ## Merge request review
@@ -348,7 +348,11 @@ The review looks for:
 - A behavior change with no test and no prompt-pack update.
 - Logic copied from `pr_ncj_build_avaya` or `pr_u_dm_build_*` column names that the decision file does not adopt.
 
-The note ends with a short list: blocking issues, questions, and what was not reviewed. “Blocking” here means the human should not approve until it is fixed or answered. The CI job itself stays green so a vendor outage cannot stall the team. Proposed default: the job is `allow_failure: true`.
+The reviewer also checks that automated tests exist for the code being changed or added. For each changed path it reports whether a test in the diff covers it, only an untouched existing test covers it, or no test was found. A changed behavior with no test, or an existing test the change has made stale, is blocking.
+
+The reviewer may also flag correctness bugs, unhandled edge cases, and unclear logic that are not on the list above. These go under a separate **Other observations** heading and are never blocking on their own.
+
+The note ends with a short list: blocking issues, questions, test coverage, other observations, and what was not reviewed. “Blocking” here means the human should not approve until it is fixed or answered. The CI job itself stays green so a vendor outage cannot stall the team. Proposed default: the job is `allow_failure: true`.
 
 Human approval remains required in GitLab. The Claude note does not count as that approval.
 

@@ -1,5 +1,5 @@
 ---
-name: decisions
+name: decision-check
 description: Use when a change touches classification, enrich, stitching, score, thresholds, or partner filters.
 ---
 

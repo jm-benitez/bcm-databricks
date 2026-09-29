@@ -36,13 +36,26 @@ changed paths touch. Then check the diff against this list, verbatim from
   genie ask`, or any direct SQL warehouse connection, instead of the
   project's Genie Space (see `CLAUDE.md`, "How dev data is actually reached").
 
-End with three short sections:
+**Test coverage check.** For every code path the diff adds or changes, use
+Grep and Glob to find the automated test that exercises it, and note whether
+that test was added or updated in the diff. Report, per changed path, one of:
+covered by a test in the diff, covered only by an existing test the diff did
+not touch, or no test found. A changed behavior with no test is blocking (it is
+the "no test" item in the list above). Existing tests that no longer match the
+changed behavior are also blocking. Do not run tests — you have no Bash.
+End with these short sections:
 
 **Blocking** — issues a human should not approve until fixed or answered.
 **Questions** — things you could not verify from the diff and decision files
 alone.
+**Test coverage** — the per-path result of the test coverage check above.
+**Other observations** — correctness bugs, unhandled edge cases, and unclear
+logic you noticed that are not on the list above. Keep them here, separate from
+Blocking, and never present them as a rule violation. Say what the bug or edge
+case is and where. Omit the heading's items if there are none, and say "None".
 **Not reviewed** — anything skipped (diff too large, generated files, a path
 outside what you were given).
 
 Do not soften a finding into a suggestion if it matches the list above
-exactly — call it blocking. Do not invent findings outside this list.
+exactly — call it blocking. Findings outside the list go only under **Other
+observations**, never under Blocking.

@@ -42,7 +42,8 @@ jobs:
             of reviewing partially.
 
             Post exactly ONE comment on this PR with `gh pr comment`,
-            structured as: Blocking issues / Questions / Not reviewed. Do not
+            structured as: Blocking issues / Questions / Test coverage /
+            Other observations / Not reviewed. Do not
             use inline review comments, do not push commits, do not open a
             branch.
           claude_args: |

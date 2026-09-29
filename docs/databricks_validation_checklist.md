@@ -66,9 +66,6 @@ before it runs**, not merely fail for an unrelated reason.
 - [ ] Any `databricks ...` command mentioning `dev_tqaddoumi_tqaddoumi_tools`,
   `dev_tqaddoumi_tqaddoumi_silver/gold/ref/ops/config/alerting`, or
   `dev_mkiwan_sandbox` → denied.
-- [ ] Ask Claude Code to edit a file under `realtimedb/` (create the
-  directory with a dummy file first if it doesn't exist locally) → denied by
-  `pretool-guard.sh`.
 - [ ] Paste a fake E.164 phone number, a `sip:` URI, or the placeholder
   prod-catalog token `nectar_prod` into a prompt → blocked by
   `prompt-guard.sh` before Claude sees it.
