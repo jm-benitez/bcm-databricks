@@ -30,6 +30,7 @@
 | [genie-check](../.claude/skills/genie-check/SKILL.md) | Gives the exact `databricks genie` steps for asking the dev Genie Space a question and recording the result. |
 | [bundle-validate](../.claude/skills/bundle-validate/SKILL.md) | Runs the dev-target bundle validation and the unit tests. |
 | [code-review](../.claude/skills/code-review/SKILL.md) | Starts the read-only reviewer on a diff, on a laptop or in CI. |
+| [create-jira-issue](../.claude/skills/create-jira-issue/SKILL.md) | Makes every Jira issue Claude drafts follow the same five parts: Title, What?, Why?, Technical Tasks and Acceptance Criteria. |
 | [realtime-patterns](../.claude/skills/realtime-patterns/SKILL.md) | Shows how Nectar's realtime database does something today, as a pattern to mirror and not code to copy. |
 
 ## Agent

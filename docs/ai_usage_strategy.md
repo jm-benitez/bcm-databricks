@@ -284,7 +284,7 @@ Permission denies in `.claude/settings.json` refuse, for every engineer:
 
 ### Skills
 
-Skills are the extra instructions Claude loads when the task matches. They live under `.claude/skills/` in `bcm`. Five are enough:
+Skills are the extra instructions Claude loads when the task matches. They live under `.claude/skills/` in `bcm`. Six are enough:
 
 | Skill | Loads when | What it tells Claude |
 |---|---|---|
@@ -293,6 +293,7 @@ Skills are the extra instructions Claude loads when the task matches. They live 
 | `genie-check` | A change is ready to check against dev data | How to ask the engineering agent, and how to update the agent instructions in the same change |
 | `bundle-validate` | Tests or the Databricks bundle need a run | The dev-target validate command and the unit-test command. Production deploy is not in the skill |
 | `code-review` | A diff is ready to review, on the engineer’s machine or in the GitLab job | Starts the read-only reviewer below, applies the checklist and the test-coverage check in [Merge request review](#merge-request-review), and reports other observations separately. On the machine, findings stay in the terminal. In GitLab, the job posts them on the request |
+| `create-jira-issue` | Someone asks Claude to create or draft a Jira issue | The five-part structure every issue has (Title, What?, Why?, Technical Tasks, Acceptance Criteria), the no-invention and data-boundary rules, and to draft first and create only after the engineer agrees |
 
 ### Hooks
 
@@ -322,7 +323,7 @@ Streaming rules stay in `CLAUDE.md` rather than a skill per pipeline stage. Ther
 | | Discovery | Design | Development | Merge request |
 |---|---|---|---|---|
 | Tools | Read, Unity Catalog metadata | Read, Write, Unity Catalog metadata | Edit, Write, Bash, Genie, Unity Catalog | GitLab, to open the request. The review job is CI, not these tools |
-| Skills | `realtime-patterns`, `decision-check` | `decision-check` | `decision-check`, `genie-check`, `bundle-validate`, then `code-review` before the request is opened | `code-review`, loaded by the CI job from the checkout |
+| Skills | `realtime-patterns`, `decision-check` | `decision-check` | `decision-check`, `genie-check`, `bundle-validate`, `create-jira-issue`, then `code-review` before the request is opened | `code-review`, loaded by the CI job from the checkout |
 | Hooks | `SessionStart`, `UserPromptSubmit` | Those, plus `PreToolUse` | The full set, including `Stop` | The CI job is comment-only, so `PreToolUse` still blocks a deploy or a secret read if that job’s prompt goes wide |
 
 ## Merge request review
@@ -381,7 +382,7 @@ The plan’s build starts the week of 5 Oct 2026, after the discovery readout. B
 1. Read this document, the v3.2-A diagram, and the project plan’s Phase 1 and Phase 2 rows.
 2. Accept or replace the two open defaults (data boundary, non-blocking review).
 3. File the producer-list decision. The diagram and the plan disagree, and every later schema task depends on that file.
-4. Add `CLAUDE.md`, `.claude/settings.json`, `.claudeignore`, the read-only reviewer, the five skills, the MCP servers, and the review job to the existing `bcm` repository, and turn on branch protection that requires one human approval. Use of the repository starts with that change.
+4. Add `CLAUDE.md`, `.claude/settings.json`, `.claudeignore`, the read-only reviewer, the six skills, the MCP servers, and the review job to the existing `bcm` repository, and turn on branch protection that requires one human approval. Use of the repository starts with that change.
 5. Open empty decision files for sessions 1 through 5, 7, and 8, plus the SkyConnect hot/cold cut and the CoreConnect 37-field scope, so a Claude session has somewhere to stop.
 6. Create the empty engineering Genie Agent in dev, shared with this group, with no tables attached yet.
 7. Connect Claude Code to that agent from one engineer’s machine and confirm a permissions failure on a production catalog, so the boundary is real.
