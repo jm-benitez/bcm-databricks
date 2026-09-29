@@ -44,6 +44,8 @@ have Bronze data today. CoreConnect and Sonus have no tables yet.
 - Column meanings for correlation, watermark, and score come from Unity
   Catalog comments on the attached tables — read those via `databricks
   tables get <catalog.schema.table>`, not invented here.
+- Never return a raw phone number, SIP URI, or other subscriber identifier in
+  an answer; aggregate or mask it instead.
 - Example questions: see `docs/genie_prompt_pack.md`.
 
 <!-- TODO once more Bronze/Silver/Gold tables land in nectar.bronze/silver/gold:
@@ -154,7 +156,12 @@ repo had no record of the steps before this section.
   and never to return a raw phone number, SIP URI, or other subscriber
   identifier.
 
-**Known gap:** the live Space's instruction text is not word-for-word the same
-as the "Instructions" section above (this file was expanded afterwards). Diff
-the two with `databricks genie get-space <SPACE_ID>` and push this file's
-version with `databricks genie update-space` if you want them identical.
+**Instructions synced 2026-09-29:** the live Space's instruction block was
+replaced with the "Instructions" section above, via `databricks genie
+update-space` with the exported `etag`. Tables, sample questions, title,
+warehouse and folder were left unchanged. The live text is that section with
+one adaptation, because the agent cannot read the repo: the pointers to
+`docs/genie_prompt_pack.md` and `databricks tables get` were dropped. The
+identifier rule is now in both copies. Wording may drift again on the next
+edit, so diff with `databricks genie get-space <SPACE_ID>
+--include-serialized-space` when in doubt.
