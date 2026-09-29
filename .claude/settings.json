@@ -1,0 +1,108 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(**)",
+      "Grep(**)",
+      "Glob(**)",
+      "Edit(**)",
+      "Write(**)",
+      "Bash(databricks bundle validate --target dev*)",
+      "Bash(databricks genie list-spaces*)",
+      "Bash(databricks genie get-space*)",
+      "Bash(databricks genie start-conversation*)",
+      "Bash(databricks genie create-message*)",
+      "Bash(databricks genie get-message*)",
+      "Bash(databricks genie get-message-attachment-query-result*)",
+      "Bash(pytest tests/*)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(**/.databrickscfg)",
+      "Read(**/*credentials*)",
+      "Read(**/*.pem)",
+      "Read(**/id_rsa*)",
+      "Edit(./.env)",
+      "Edit(./.env.*)",
+      "Edit(**/*credentials*)",
+      "Write(./.env)",
+      "Write(./.env.*)",
+      "Write(**/*credentials*)",
+      "Bash(databricks bundle deploy*prod*)",
+      "Bash(databricks bundle deploy*production*)",
+      "Bash(databricks experimental aitools tools query*)",
+      "Bash(databricks experimental genie ask*)",
+      "Bash(env)",
+      "Bash(printenv*)",
+      "Bash(*redis-cli*)",
+      "Bash(*eventbridge*)",
+      "Bash(*aws events*)",
+      "Bash(*nectar_prod*)",
+      "Bash(databricks * dev_tqaddoumi_tqaddoumi_tools*)",
+      "Bash(databricks * dev_tqaddoumi_tqaddoumi_silver*)",
+      "Bash(databricks * dev_tqaddoumi_tqaddoumi_gold*)",
+      "Bash(databricks * dev_tqaddoumi_tqaddoumi_ref*)",
+      "Bash(databricks * dev_tqaddoumi_tqaddoumi_ops*)",
+      "Bash(databricks * dev_tqaddoumi_tqaddoumi_config*)",
+      "Bash(databricks * dev_tqaddoumi_tqaddoumi_alerting*)",
+      "Bash(databricks * dev_mkiwan_sandbox*)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/session-start.sh"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/prompt-guard.sh"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/pretool-guard.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/posttool-reminder.sh"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/stop-secret-scan.sh"
+          }
+        ]
+      }
+    ]
+  },
+  "enabledPlugins": {
+    "databricks@claude-plugins-official": true
+  }
+}

@@ -1,0 +1,18 @@
+# Databricks bundle/local state
+.databricks/
+
+# Checkpoints and streaming state
+**/checkpoints/**
+**/_checkpoints/**
+
+# Build output
+build/
+dist/
+
+# Large fixtures
+fixtures/large/**
+**/*.parquet
+**/*.avro
+
+# The Nectar realtime database is read-only evidence, not part of this repo
+realtimedb/

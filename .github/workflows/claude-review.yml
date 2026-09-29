@@ -1,0 +1,49 @@
+name: Claude Review
+
+# Comment-only reviewer, per docs/ai_usage_strategy.md ("Merge request review").
+# Posts exactly one PR comment. Never blocks the merge: it is not a required
+# status check, and continue-on-error keeps a Claude/API outage from even
+# showing as a failed check.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Claude review (comment-only)
+        uses: anthropics/claude-code-action@v1
+        continue-on-error: true
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            Load .claude/skills/code-review/SKILL.md and follow it exactly,
+            delegating to the .claude/agents/code-reviewer.md checklist. Read
+            CLAUDE.md and every docs/decisions/*.md file this PR's changed
+            files touch.
+
+            If the diff is unusually large or touches only generated files,
+            post one comment saying the review was skipped and why, instead
+            of reviewing partially.
+
+            Post exactly ONE comment on this PR with `gh pr comment`,
+            structured as: Blocking issues / Questions / Not reviewed. Do not
+            use inline review comments, do not push commits, do not open a
+            branch.
+          claude_args: |
+            --allowedTools "Read,Grep,Glob,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*)"

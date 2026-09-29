@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Real Time CDR Enrichment, Stitching & Analytics Architecture v3.2-A</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',sans-serif;background:#f8f9fa;color:#1a1a2e;padding:32px 36px;min-height:100vh;font-size:12px}
+
+  h1{font-size:17px;font-weight:600;color:#1a1a2e;display:inline}
+  .v-tag{display:inline-block;background:#6d28d9;color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:8px;vertical-align:middle}
+  .subtitle{font-size:10px;color:#6b7280;margin-top:3px;margin-bottom:28px}
+  .sec-label{font-size:9px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#9ca3af;margin-bottom:6px;padding-left:1px}
+
+  .card{border-radius:7px;padding:10px 12px;border:1px solid #e5e7eb;background:#fff}
+  .card-title{font-size:12px;font-weight:600;color:#1a1a2e;margin-bottom:2px}
+  .card-sub{font-size:10px;color:#6b7280;line-height:1.55}
+
+  .p-amber{background:#fffbeb;border-color:#f59e0b} .p-amber .card-title{color:#b45309}
+  .p-teal {background:#ecfdf5;border-color:#10b981} .p-teal  .card-title{color:#065f46}
+  .p-blue {background:#eff6ff;border-color:#3b82f6} .p-blue  .card-title{color:#1d4ed8}
+
+  .kafka-bar{background:#ede9fe;border:1px solid #7c3aed;border-radius:7px;padding:10px 16px;text-align:center}
+  .kafka-bar .card-title{color:#5b21b6;font-size:13px}
+  .kafka-bar .card-sub{color:#7c3aed}
+
+  /* streaming pipeline */
+  .stream-box{background:#fff;border:1px solid #d1d5db;border-radius:9px;padding:14px 16px}
+  .stream-box-label{font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#6b7280;margin-bottom:8px}
+  .stream-top-desc{font-size:10px;color:#6b7280;margin-bottom:10px}
+
+  .pipe-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:3px}
+  .pipe-tag{font-size:10px;font-weight:700;color:#fff;padding:3px 10px;border-radius:4px;min-width:68px;text-align:center;flex-shrink:0;margin-top:1px}
+  .pipe-desc{font-size:10px;color:#374151;line-height:1.5}
+  .pipe-note{font-size:10px;color:#dc2626;margin-left:78px;margin-top:1px;margin-bottom:6px;font-style:italic}
+
+  .tag-bronze{background:#c2410c}
+  .tag-enrich{background:#0f766e}
+  .tag-score{background:#6d28d9}
+  .tag-silver{background:#0d9488}
+  .tag-sync{background:#1e3a8a}
+  .tag-device{background:#d97706}
+
+  /* branch box inside pipeline */
+  .branch-box{border:1px solid #e5e7eb;border-radius:7px;padding:10px 12px;margin:6px 0 6px 0;background:#fafafa}
+  .branch-label{font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#6b7280;margin-bottom:8px}
+  .branch-split{display:flex;gap:10px;align-items:flex-start}
+  .branch-col{flex:1;border:1px dashed #e5e7eb;border-radius:6px;padding:8px 10px;background:#fff}
+  .branch-col-label{font-size:9px;font-weight:600;margin-bottom:5px}
+  .branch-col-desc{font-size:9px;color:#6b7280;line-height:1.55}
+
+  /* alert callouts */
+  .alert-callout{border-left:3px solid;border-radius:0 5px 5px 0;padding:7px 10px;margin:5px 0 8px 0}
+  .ac-device{background:#fef9c3;border-color:#d97706}
+  .ac-device .alert-callout-title{color:#92400e}
+  .ac-reg{background:#fee2e2;border-color:#dc2626}
+  .ac-reg .alert-callout-title{color:#991b1b}
+  .ac-dxp{background:#fce7f3;border-color:#be185d}
+  .ac-dxp .alert-callout-title{color:#9d174d}
+  .alert-callout-title{font-size:10px;font-weight:600;margin-bottom:2px}
+  .alert-callout-desc{font-size:9px;color:#6b7280;line-height:1.55}
+
+  .latency-tag{display:inline-block;font-size:8px;font-weight:700;padding:1px 5px;border-radius:8px;margin-right:3px;vertical-align:middle}
+  .lt-direct  {background:#d97706;color:#fff}
+  .lt-realtime{background:#dc2626;color:#fff}
+  .lt-postcall{background:#2563eb;color:#fff}
+
+  /* alerting side panel */
+  .alert-box{background:#fff;border:1px dashed #fca5a5;border-radius:9px;padding:12px 14px;width:252px;flex-shrink:0}
+  .alert-box-label{font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#ef4444;margin-bottom:8px}
+  .a-card{background:#fff;border:1px solid #fecaca;border-radius:6px;padding:8px 10px;margin-bottom:6px}
+  .a-card-title{font-size:11px;font-weight:600;color:#b91c1c;margin-bottom:2px}
+  .a-card-sub{font-size:10px;color:#6b7280;line-height:1.5}
+  .a-poll{font-size:10px;color:#b91c1c;text-align:center;margin:3px 0}
+  .a-footer{font-size:9px;color:#9ca3af;line-height:1.5;margin-top:6px;font-style:italic}
+  .alert-levels-summary{border-top:1px dashed #fecaca;margin-top:8px;padding-top:8px}
+  .al-row{margin-bottom:6px}
+  .al-label{font-size:9px;font-weight:600;margin-bottom:2px}
+  .al-desc{font-size:9px;color:#6b7280;line-height:1.5}
+
+  .ref-row{display:flex;gap:10px;margin-top:10px}
+  .ref-card{flex:1;background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:9px 11px}
+  .ref-card .card-title{font-size:11px;color:#374151;font-weight:600}
+
+  .split{display:flex;gap:12px;align-items:flex-start}
+  .split-main{flex:1}
+
+  .lakebase-card{background:#f0fdf4;border:1px solid #6ee7b7;border-radius:7px;padding:11px 13px}
+  .lakebase-card .card-title{color:#065f46;font-size:12px}
+  .tenant-card{background:#ecfdf5;border:1px dashed #6ee7b7;border-radius:6px;padding:8px 10px;margin-top:7px}
+  .tenant-card .card-title{font-size:10px;color:#047857}
+  .ltap-note{background:#ecfdf5;border:1px dashed #059669;border-radius:5px;padding:7px 10px;margin-top:7px;font-size:10px;color:#065f46;line-height:1.6}
+  .ltap-badge{display:inline-block;background:#065f46;color:#6ee7b7;font-size:8px;font-weight:700;padding:1px 5px;border-radius:8px;margin-left:5px;vertical-align:middle}
+
+  .ui-card{background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:9px 11px;margin-bottom:6px}
+  .ui-card .card-title{color:#1d4ed8;font-size:11px}
+
+  .db-box{border:1px dashed #7c3aed;border-radius:9px;padding:14px 16px}
+  .db-box-label{font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#7c3aed;margin-bottom:10px}
+  .db-layer{display:flex;align-items:flex-start;gap:10px;padding:8px 11px;background:#faf5ff;border:1px solid #e9d5ff;border-radius:5px;margin-bottom:5px}
+  .db-tag{font-size:10px;font-weight:700;color:#fff;padding:2px 9px;border-radius:4px;min-width:64px;text-align:center;flex-shrink:0}
+  .tag-gold{background:#b45309}
+  .tag-ml{background:#6d28d9}
+  .tag-thresh{background:#c2410c}
+  .db-desc{font-size:10px;color:#374151;line-height:1.5}
+  .thresh-note{background:#fffbeb;border:1px dashed #f59e0b;border-radius:5px;padding:8px 11px;margin-top:8px;font-size:10px;color:#78350f;line-height:1.65;font-style:italic}
+  .thresh-sub{font-size:9px;color:#9ca3af;margin-top:5px;line-height:1.5}
+
+  .unity{background:#f5f3ff;border:1px solid #c4b5fd;border-radius:7px;padding:10px 16px;text-align:center}
+  .unity .card-title{font-size:12px;color:#4c1d95;font-weight:600}
+
+  .consumer-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .c-card{background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px;padding:9px 11px}
+  .c-card .card-title{font-size:11px;color:#0c4a6e;font-weight:600}
+  .c-card .card-sub{font-size:10px;color:#075985}
+
+  .arrow-center{display:flex;justify-content:center;padding:4px 0}
+  .arrow-down{width:1px;height:16px;background:#d1d5db;position:relative}
+  .arrow-down::after{content:'';position:absolute;bottom:-4px;left:-3px;border-left:4px solid transparent;border-right:4px solid transparent;border-top:6px solid #d1d5db}
+
+  .row{display:flex;gap:10px;align-items:stretch}
+  .full{flex:1}
+  .layer{margin-bottom:10px}
+</style>
+</head>
+<body>
+
+<div>
+  <h1>Real Time CDR Enrichment, Stitching &amp; Analytics Architecture</h1>
+  <span class="v-tag">v3.2-A</span>
+</div>
+<p class="subtitle">Databricks reads directly from Kafka · Redis + Alert Workers + EventBridge preserved as-is · Three alert types classified at BRONZE · LTAP shared storage (DAIS 2026)</p>
+
+<!-- PRODUCERS -->
+<div class="layer">
+  <div class="sec-label">Producers</div>
+  <div class="row">
+    <div class="card p-amber full"><div class="card-title">Sonus SBC</div><div class="card-sub">CDR · SIP · QoS per leg per call</div></div>
+    <div class="card p-teal  full"><div class="card-title">CoreConnect</div><div class="card-sub">CDR · SIP · QoS per leg per call</div></div>
+    <div class="card p-blue  full"><div class="card-title">Nectar Diagnostics</div><div class="card-sub">endpoint session · device health · QoS<br/><span style="font-size:9px;color:#9ca3af">device events embedded within existing feed</span></div></div>
+  </div>
+</div>
+
+<div class="arrow-center"><div class="arrow-down"></div></div>
+
+<!-- KAFKA -->
+<div class="layer">
+  <div class="kafka-bar">
+    <div class="card-title">Confluent Kafka</div>
+    <div class="card-sub">topics: cdr_sbc · cdr_uc · sip_messages · qos_streams · nd_sessions &nbsp;|&nbsp; device events embedded within existing topics — no separate feed</div>
+  </div>
+</div>
+
+<div class="arrow-center"><div class="arrow-down"></div></div>
+
+<!-- DATABRICKS STREAMING + ALERTING -->
+<div class="layer">
+  <div class="sec-label">Databricks Streaming — Direct Kafka Source</div>
+  <div class="split">
+
+    <div class="split-main">
+      <div class="stream-box">
+        <div class="stream-box-label">Spark Structured Streaming · DLT (SDP) · Continuous mode</div>
+        <div class="stream-top-desc">readStream.format("kafka") · serverless · autoscale on Kafka consumer lag · meets 60s SLA</div>
+
+        <!-- BRONZE with record classification -->
+        <div class="pipe-row">
+          <div class="pipe-tag tag-bronze">BRONZE</div>
+          <div class="pipe-desc">deserialise at ingestion (from_avro / from_json) · partitioned tenant / date / type<br/>
+            <span style="font-size:9px;color:#b45309;font-weight:600">classifies record type: CDR · SIP · QoS · device event → routes to appropriate path</span>
+          </div>
+        </div>
+
+        <!-- Branch split -->
+        <div class="branch-box" style="margin:8px 0">
+          <div class="branch-label">Record type routing — branched at Bronze</div>
+          <div class="branch-split">
+
+            <!-- Fast path: device events -->
+            <div class="branch-col" style="border-color:#d97706;background:#fffbeb;flex:0.8">
+              <div class="branch-col-label" style="color:#b45309">
+                <span class="latency-tag lt-direct">DIRECT</span>
+                Alert Type 1 — Device Events
+              </div>
+              <div class="branch-col-desc">
+                Meeting rooms · SBCs · endpoint health<br/>
+                Embedded in existing producer feeds<br/>
+                No enrichment or stitching needed<br/>
+                Direct → device SCORE → Redis INCR
+              </div>
+            </div>
+
+            <!-- Full path: CDR + SIP -->
+            <div class="branch-col" style="border-color:#0f766e;background:#f0fdf4;flex:1.2">
+              <div class="branch-col-label" style="color:#065f46">CDR · SIP · QoS — Full pipeline path</div>
+              <div class="branch-col-desc">
+                Continues through full ENRICH → SCORE → SILVER pipeline<br/><br/>
+
+                <div class="arrow-center" style="justify-content:flex-start;padding:3px 0"><div class="arrow-down" style="background:#6b7280"></div></div>
+
+                <div style="margin-bottom:6px">
+                  <div style="font-size:9px;font-weight:600;color:#0f766e;margin-bottom:2px">ENRICH</div>
+                  <div>resolve hierarchy · identity · geo · topology · response codes (Delta / broadcast joins)</div>
+                </div>
+
+                <div class="arrow-center" style="justify-content:flex-start;padding:3px 0"><div class="arrow-down" style="background:#6b7280"></div></div>
+
+                <!-- Alert type 2 -->
+                <div class="alert-callout ac-reg" style="margin-left:0">
+                  <div class="alert-callout-title"><span class="latency-tag lt-realtime">NEAR REAL-TIME</span> Alert Type 2 — Registration &amp; Per-Record</div>
+                  <div class="alert-callout-desc">SIP registration failures · per-record threshold breaches · carrier/codec violations · fired post-ENRICH · no stitching required</div>
+                </div>
+
+                <div style="margin-bottom:6px">
+                  <div style="font-size:9px;font-weight:600;color:#6d28d9;margin-bottom:2px">SCORE</div>
+                  <div>per-event scoring vs threshold (broadcast Delta) → emits verdict · INCR Redis counter (foreachBatch · idempotent on batch_id)</div>
+                </div>
+
+                <div class="arrow-center" style="justify-content:flex-start;padding:3px 0"><div class="arrow-down" style="background:#6b7280"></div></div>
+
+                <div style="margin-bottom:6px">
+                  <div style="font-size:9px;font-weight:600;color:#0d9488;margin-bottom:2px">SILVER</div>
+                  <div>assembles sessions · Delta MERGE · variable SIP legs · late records · stateful streaming · watermark handles out-of-order arrivals</div>
+                </div>
+
+                <div class="arrow-center" style="justify-content:flex-start;padding:3px 0"><div class="arrow-down" style="background:#6b7280"></div></div>
+
+                <!-- Alert type 3 -->
+                <div class="alert-callout ac-dxp" style="margin-left:0">
+                  <div class="alert-callout-title"><span class="latency-tag lt-postcall">POST-CALL</span> Alert Type 3 — DXP / Nectar Score</div>
+                  <div class="alert-callout-desc">Session-level quality alerts · requires full CDR + SIP stitching · post-call latency acceptable · watermark guards late arrivals</div>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Both paths converge to Redis -->
+        <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:6px;padding:7px 12px;margin-top:4px">
+          <div style="font-size:9px;font-weight:600;color:#c2410c;margin-bottom:2px">All paths converge → Redis INCR</div>
+          <div style="font-size:9px;color:#6b7280;line-height:1.5">Device events · per-record scores · post-stitch session scores — all write to Redis counters via foreachBatch · separate namespaces per alert type · same alert worker evaluates all</div>
+        </div>
+
+        <div class="arrow-center" style="padding:6px 0"><div class="arrow-down"></div></div>
+
+        <!-- SYNC -->
+        <div class="pipe-row">
+          <div class="pipe-tag tag-sync">SYNC</div>
+          <div class="pipe-desc">LTAP shared storage — Silver Delta readable from Lakebase natively <span class="ltap-badge">LTAP</span></div>
+        </div>
+
+      </div>
+
+      <!-- Ref data + UC -->
+      <div class="ref-row">
+        <div class="ref-card">
+          <div class="card-title">Reference data store · S3 / Delta</div>
+          <div class="card-sub" style="margin-top:3px">carrier · codec · route · geo · customer_tier (read via Delta / broadcast joins inside the streaming job)</div>
+        </div>
+        <div class="ref-card">
+          <div class="card-title">Unity Catalog</div>
+          <div class="card-sub" style="margin-top:3px">single governance plane · row + column filters per tenant hierarchy</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alerting side panel -->
+    <div class="alert-box">
+      <div class="alert-box-label">Alerting loop — kept as-is</div>
+
+      <div class="a-card">
+        <div class="a-card-title">Redis (ElastiCache)</div>
+        <div class="a-card-sub">tenant:metric:window counters · TTL<br/>cooldown SETNX keys<br/>threshold table (hot reload)<br/>leader election key<br/><span style="color:#9ca3af;font-size:9px">separate namespaces: device · per-record · per-session</span></div>
+      </div>
+
+      <div class="a-poll">▼ poll</div>
+
+      <div class="a-card">
+        <div class="a-card-title">Alert workers</div>
+        <div class="a-card-sub">multiple instances · leader election via Redis<br/>active / standby HA<br/>polls counters · evaluates thresholds<br/>fires once per window (cooldown check)</div>
+      </div>
+
+      <div style="display:flex;justify-content:center;padding:3px 0"><div class="arrow-down"></div></div>
+
+      <div class="a-card" style="margin-bottom:6px">
+        <div class="a-card-title">AWS EventBridge</div>
+        <div class="a-card-sub">ITSM · PagerDuty · Slack · webhook<br/><span style="color:#9ca3af;font-size:9px">SLA matrix routing by alert type</span></div>
+      </div>
+
+      <div class="alert-levels-summary">
+        <div class="al-row">
+          <div class="al-label"><span class="latency-tag lt-direct">DIRECT</span> Type 1 — Device</div>
+          <div class="al-desc">Classified at BRONZE · fast path<br/>No enrichment or stitching<br/>Direct → device SCORE → Redis</div>
+        </div>
+        <div class="al-row" style="margin-top:6px">
+          <div class="al-label"><span class="latency-tag lt-realtime">NEAR RT</span> Type 2 — Registration</div>
+          <div class="al-desc">Post-ENRICH · pre-stitching<br/>SCORE step → Redis INCR<br/>Highest priority · out-of-order risk noted</div>
+        </div>
+        <div class="al-row" style="margin-top:6px">
+          <div class="al-label"><span class="latency-tag lt-postcall">POST-CALL</span> Type 3 — DXP / Nectar</div>
+          <div class="al-desc">Post-SILVER · full CDR+SIP required<br/>Watermark guards late arrivals<br/>Post-call latency acceptable</div>
+        </div>
+      </div>
+
+      <div class="a-footer" style="margin-top:8px">independent failure domain · ingestion stall does not stall alerting on already-counted events</div>
+    </div>
+
+  </div>
+</div>
+
+<div class="arrow-center"><div class="arrow-down"></div></div>
+
+<!-- OPERATIONAL SERVING -->
+<div class="layer">
+  <div class="sec-label">Operational Serving</div>
+  <div class="split">
+    <div style="flex:1;display:flex;flex-direction:column;gap:0">
+      <div class="lakebase-card">
+        <div class="card-title">Lakebase (Databricks) <span class="ltap-badge">LTAP</span></div>
+        <div class="card-sub" style="margin-top:4px;line-height:1.7">PostgreSQL · serverless · scale-to-zero<br/>90-day retention · partitioned by call_date<br/>shared Delta storage with Lakehouse (LTAP)<br/>operator UI lookups · 1–5 ms target · Private Link</div>
+      </div>
+      <div class="tenant-card">
+        <div class="card-title">Tenant isolation model</div>
+        <div class="card-sub" style="margin-top:3px;line-height:1.6">native PostgreSQL row-level security · policy on tenant_id per session · Unity Catalog governs uniformly · no cross-tenant access possible</div>
+      </div>
+      <div class="ltap-note">DAIS 2026 · LTAP: Lakebase + Lakehouse share one storage layer<br/>Silver sessions readable from Lakebase natively — no JDBC sync pipeline<br/>Snapshot storage now billable — factor into infrastructure cost</div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+      <div class="ui-card"><div class="card-title">Operator UI — session detail</div><div class="card-sub">call journey · session lookup · search by number · 90 days · Lakebase</div></div>
+      <div class="ui-card"><div class="card-title">Operator UI — aggregations</div><div class="card-sub">volume trends · quality charts · failure rates · Databricks SQL Serverless</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="arrow-center"><div class="arrow-down"></div></div>
+
+<!-- DATABRICKS ANALYTICS + ML -->
+<div class="layer">
+  <div class="db-box">
+    <div class="db-box-label">Databricks — Analytics + ML (Gold, ML, Thresholds — feed Redis on threshold change)</div>
+    <div class="db-layer"><div class="db-tag tag-gold">GOLD</div><div class="db-desc">aggregates · BI · reporting · trends · per-tenant rollups · served by Databricks SQL Serverless</div></div>
+    <div class="db-layer"><div class="db-tag tag-ml">ML</div><div class="db-desc">per-tenant baseline · weekly · Beta-Binomial · percentile · Prophet — MLflow tracks runs</div></div>
+    <div class="db-layer"><div class="db-tag tag-thresh">THRESH</div><div class="db-desc">tenant · metric · floor · warn_n · crit_n · window · cooldown · version — separate namespaces: device thresholds · per-record thresholds (Type 2) · per-session nectar score thresholds (Type 3)</div></div>
+    <div class="thresh-note">ML derives new thresholds per tenant → writes Delta threshold table → published to Redis on change → broadcast Delta reload inside streaming SCORE and SILVER steps → alert workers reload thresholds · event-driven, no restart</div>
+    <div class="thresh-sub">threshold table has two readers: the Databricks SCORE step (broadcast Delta) and the alert workers (via Redis) — both reload on change, no consumer rewrites needed</div>
+  </div>
+</div>
+
+<div class="arrow-center"><div class="arrow-down"></div></div>
+
+<!-- UNITY CATALOG -->
+<div class="layer">
+  <div class="unity">
+    <div class="card-title">Unity Catalog · governance · row + column filters per tenant hierarchy</div>
+    <div class="card-sub" style="margin-top:4px">single access policy applied uniformly across every consumer below</div>
+  </div>
+</div>
+
+<div class="arrow-center"><div class="arrow-down"></div></div>
+
+<!-- CONSUMER SURFACES -->
+<div class="layer">
+  <div class="sec-label">Databricks consumer surfaces</div>
+  <div class="consumer-grid">
+    <div class="c-card"><div class="card-title">AI / BI Genie</div><div class="card-sub">natural language · ask the data</div></div>
+    <div class="c-card"><div class="card-title">AI / BI Dashboards</div><div class="card-sub">per-tier reporting · embedded in UI</div></div>
+    <div class="c-card"><div class="card-title">Mosaic AI · serving</div><div class="card-sub">anomaly inference · model endpoints</div></div>
+    <div class="c-card"><div class="card-title">MCP server</div><div class="card-sub">agentic AI integration · external workflows</div></div>
+    <div class="c-card"><div class="card-title">Vector search</div><div class="card-sub">knowledge base · issue + remediation</div></div>
+    <div class="c-card"><div class="card-title">Quick Suite + BI</div><div class="card-sub">self-service analytics · external tools</div></div>
+  </div>
+</div>
+
+<div style="margin-top:12px;padding:8px 0;border-top:1px solid #e5e7eb">
+  <p style="font-size:9px;color:#9ca3af;line-height:1.8">every consumer sees only the tenant scope its caller is entitled to · Unity Catalog enforces uniformly · no per-tool access logic · the catalog is the single point of policy for natural language · BI · ML · agentic</p>
+</div>
+
+</body>
+</html>
