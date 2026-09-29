@@ -204,6 +204,7 @@ They may not receive:
 - Production phone numbers, SIP URIs, IP addresses tied to a subscriber, or tenant names taken from production.
 - Contents of Redis, EventBridge payloads, or alert-worker logs from production.
 - A warehouse token, GitLab token, or API key pasted into a prompt.
+- Any of the above written into Jira, Confluence, or a merge request by Claude. Those are shared surfaces, so the same limits apply to what Claude writes as to what it reads.
 
 The engineering Genie Agent is the only AI path that runs SQL over stored rows, and only in dev, as the asking user. If discovery needs a real payload shape, a person masks it by hand and checks the masked sample in. The model does not perform that masking.
 
@@ -275,6 +276,8 @@ Two MCP servers are connected, using Databricks’ current Claude Code login (`u
 
 A GitLab server scoped to project `bcm` is connected so Claude can open the merge request the engineer is already making. It cannot approve, merge, or change protected-branch settings.
 
+An Atlassian server (`.mcp.json`, remote MCP, OAuth in the browser as the engineer) gives Claude read and write access to Jira, so it can read a ticket for context and comment on or update the ticket the engineer is working on. Every call to it asks the engineer first (`permissions.ask`), and a `PreToolUse` hook (`.claude/hooks/jira-guard.sh`) refuses a call whose input holds a phone number, SIP URI, secret, or the production catalog name. Jira is a shared system, so anything Claude writes there is published to everyone who can see the ticket. Claude posts only what the data boundary already allows: design notes, decision-file names, and aggregates. It does not paste Genie result rows, and it does not transition or close a ticket unless the engineer asked for that.
+
 Permission denies in `.claude/settings.json` refuse, for every engineer:
 
 - Reading or writing `.env`, credential files, and warehouse tokens.
@@ -301,9 +304,9 @@ Hooks in `.claude/settings.json` run even when Claude skips a rule in `CLAUDE.md
 |---|---|
 | `SessionStart` | Adds a short reminder to the session: the design in this repo is the source of truth, the realtime database is evidence to mirror, rows are read through the dev Genie Agent, production payloads stay out of the prompt |
 | `UserPromptSubmit` | Blocks the turn when the prompt contains the production catalog name or a pasted CDR extract. The engineer masks the sample and continues |
-| `PreToolUse` on Bash | Blocks the permission-deny cases above when a deny rule is not enough |
+| `PreToolUse` on Bash | Blocks the permission-deny cases above when a deny rule is not enough. Bundle `deploy`, `run`, `bind`, `unbind` and `deployment` commands are allowed only with an explicit `dev` target, checked across the whole command so `-tprod`, `--target=prod` and `DATABRICKS_BUNDLE_TARGET` cannot slip past. `bundle destroy` is always blocked |
 | `PostToolUse` on Edit and Write | After a pipeline file changes, reminds the engineer to update the matching test and the Genie prompt-pack line. The turn still completes |
-| `Stop` | Runs a secret scanner on the diff and blocks the turn on a match. The same scanner runs in the GitLab test pipeline |
+| `Stop` | Runs a secret scanner on the diff and on untracked files, and blocks the turn on a match. The same gitleaks scanner runs in pre-commit and in the CI pipeline |
 
 `/hooks` shows the merged set. It does not edit it. Changes to hooks go through a merge request.
 
@@ -311,7 +314,8 @@ Hooks in `.claude/settings.json` run even when Claude skips a rule in `CLAUDE.md
 
 - `.claudeignore` keeps checkpoint directories, build output, `.databricks/`, large fixtures, and a realtime-database checkout out of Claude’s context.
 - `.claude/agents/code-reviewer.md` is a reviewer that can Read, Grep, and Glob, and cannot edit. The `code-review` skill starts it, so the session that wrote the change is not the session that reviews it.
-- Bash is allowed for the test command and `databricks bundle validate` on the dev target. Any other shell command asks the engineer first.
+- Bash is allowed for the test command, `databricks bundle validate` on the dev target, and read-only `databricks tables get` inside the dev schemas. Deploys, bundle runs, Genie Space create and update, secrets commands and `git push` are explicit ask rules. `bundle destroy` and force-push are denied. Any other shell command asks the engineer first.
+- Personal overrides (`.claude/settings.local.json`, `CLAUDE.local.md`) are gitignored, and `.pre-commit-config.yaml` runs gitleaks before each commit.
 
 Streaming rules stay in `CLAUDE.md` rather than a skill per pipeline stage. There is no SQL warehouse connection, because that would bypass the Genie Agent. Streaming tests are not hooked to the end of every turn. The engineer runs them with `bundle-validate`.
 

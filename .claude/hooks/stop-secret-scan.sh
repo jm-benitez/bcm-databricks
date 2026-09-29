@@ -1,8 +1,9 @@
 #!/bin/bash
-# Stop: scan the working-tree diff for secret-shaped strings and block
-# completion on a match. Prefers gitleaks if installed; falls back to a
-# regex scan. The same scan should run in CI (.github/workflows/claude-review.yml)
-# so the two can't drift.
+# Stop: scan the working tree for secret-shaped strings and block completion
+# on a match. Prefers gitleaks if installed; falls back to a regex scan of the
+# diff and of untracked files. The same gitleaks scan runs in CI
+# (.github/workflows/secret-scan.yml) and pre-commit (.pre-commit-config.yaml)
+# so the three can't drift.
 
 input=$(cat)
 cwd=$(jq -r '.cwd // "."' <<<"$input")
@@ -29,7 +30,14 @@ pattern='(AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----|dapi[0-9a-f]{32,}|
 
 match=$(echo "$diff_output" | grep -inE "$pattern" | grep '^[0-9]*:+' )
 
-if [[ -n "$match" ]]; then
+# Untracked (new, not yet added) files never show up in `git diff`. grep -I skips binaries;
+# gitignored files are excluded by --exclude-standard.
+untracked_match=$(git ls-files --others --exclude-standard 2>/dev/null | while IFS= read -r f; do
+  [[ -f "$f" ]] && grep -InE "$pattern" -- "$f" 2>/dev/null | sed "s|^|${f}:|"
+done)
+match="${match}${match:+$'\n'}${untracked_match}"
+
+if [[ -n "${match//[[:space:]]/}" ]]; then
   block "Secret-shaped string found in the diff. Remove it before continuing:\n${match}"
 fi
 

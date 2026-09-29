@@ -35,6 +35,12 @@ or project manager, and must be re-signed for real before Phase 2.
 Do not print or write production CDR, phone numbers, or SIP URIs.
 Dev data questions go to the engineering Genie Agent.
 
+Jira (Atlassian MCP) is a shared system: read tickets for context, and
+comment on or update only the ticket the engineer is working on. Every call
+asks first. Post design notes, decision-file names, and aggregates only,
+never Genie result rows, and do not transition or close a ticket unless
+asked.
+
 Add or update the automated test and the Genie prompt-pack entry for
 the behavior you changed.
 

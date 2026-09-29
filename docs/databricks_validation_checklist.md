@@ -63,6 +63,13 @@ before it runs**, not merely fail for an unrelated reason.
   ("Genie One" searches all workspace data, not this project's fixed table
   list).
 - [ ] `databricks bundle deploy --target prod` → denied.
+- [ ] Bundle deploy/run with any other target spelling or none → denied by
+  `pretool-guard.sh`: `-tprod`, `--target=prod`, `--target production`,
+  `-t test`, `DATABRICKS_BUNDLE_TARGET=prod databricks bundle run <job>`, and a
+  bare `databricks bundle deploy`. `-t dev` passes the hook (and then asks).
+- [ ] `databricks bundle destroy -t dev` and `git push --force` → denied.
+- [ ] `databricks genie update-space` / `create-space` and `git push` → ask
+  first (never run silently).
 - [ ] Any `databricks ...` command mentioning `dev_tqaddoumi_tqaddoumi_tools`,
   `dev_tqaddoumi_tqaddoumi_silver/gold/ref/ops/config/alerting`, or
   `dev_mkiwan_sandbox` → denied.
@@ -70,7 +77,26 @@ before it runs**, not merely fail for an unrelated reason.
   prod-catalog token `nectar_prod` into a prompt → blocked by
   `prompt-guard.sh` before Claude sees it.
 - [ ] Introduce a fake secret-shaped string (e.g. `AKIA` + 16 chars) into a
-  tracked file and end the turn → `stop-secret-scan.sh` blocks completion.
+  tracked file, or into a new untracked file that is not gitignored, and end
+  the turn → `stop-secret-scan.sh` blocks completion. The same string in a
+  gitignored file is not scanned.
+- [ ] `.github/workflows/secret-scan.yml` runs on the PR and fails on the same
+  fake string (remove it before merging).
+
+## 2b. Jira access (Atlassian MCP)
+
+- [ ] `/mcp` lists the project's `atlassian` server. On first use each
+  engineer approves it and signs in with Atlassian OAuth in the browser
+  (nothing to paste, no token in the repo).
+- [ ] Ask Claude to read a Jira ticket → the call asks for approval first.
+  Once the real tool names are visible, move the read-only ones (search, get
+  issue) from `ask` to `allow` in `.claude/settings.json` and leave every
+  write tool on `ask`.
+- [ ] Ask Claude to comment on a ticket with a fake SIP URI, a 10+ digit
+  number, or a fake secret in the text → denied by `jira-guard.sh` before the
+  approval prompt. A plain comment reaches the approval prompt.
+- [ ] Confirm Claude does not post Genie result rows, and does not
+  transition or close a ticket unless you asked.
 
 ## 3. Permission boundary at the Unity Catalog level (not just the Agent)
 
@@ -101,10 +127,3 @@ before it runs**, not merely fail for an unrelated reason.
 - [ ] Confirm the plugin's own hooks (Databricks auth/context priming) don't
   conflict with this repo's hooks — `/hooks` in a Claude Code session should
   show both this repo's 5 hooks and the plugin's 3, with no errors.
-
-## 5. Warehouse behavior
-
-- [ ] Stop the warehouse (`databricks warehouses stop --id 431f6c2d74d114de`)
-  and confirm a Genie question still completes (it should auto-start the
-  warehouse — expect a longer first response, status passing through
-  `PENDING_WAREHOUSE`).

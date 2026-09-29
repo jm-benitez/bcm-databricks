@@ -13,6 +13,11 @@
       "Bash(databricks genie create-message*)",
       "Bash(databricks genie get-message*)",
       "Bash(databricks genie get-message-attachment-query-result*)",
+      "Bash(databricks tables get nectar.bronze.*)",
+      "Bash(databricks tables get nectar.silver.*)",
+      "Bash(databricks tables get nectar.gold.*)",
+      "Bash(databricks tables get nectar.ops.*)",
+      "Bash(databricks tables get nectar.dev_tqaddoumi_tqaddoumi_bronze.*)",
       "Bash(pytest tests/*)"
     ],
     "deny": [
@@ -30,6 +35,9 @@
       "Write(**/*credentials*)",
       "Bash(databricks bundle deploy*prod*)",
       "Bash(databricks bundle deploy*production*)",
+      "Bash(databricks bundle destroy*)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
       "Bash(databricks experimental aitools tools query*)",
       "Bash(databricks experimental genie ask*)",
       "Bash(env)",
@@ -46,6 +54,15 @@
       "Bash(databricks * dev_tqaddoumi_tqaddoumi_config*)",
       "Bash(databricks * dev_tqaddoumi_tqaddoumi_alerting*)",
       "Bash(databricks * dev_mkiwan_sandbox*)"
+    ],
+    "ask": [
+      "Bash(databricks bundle deploy*)",
+      "Bash(databricks bundle run*)",
+      "Bash(databricks genie create-space*)",
+      "Bash(databricks genie update-space*)",
+      "Bash(databricks secrets*)",
+      "Bash(git push*)",
+      "mcp__atlassian"
     ]
   },
   "hooks": {
@@ -76,6 +93,15 @@
           {
             "type": "command",
             "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/pretool-guard.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__atlassian__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/jira-guard.sh"
           }
         ]
       }
