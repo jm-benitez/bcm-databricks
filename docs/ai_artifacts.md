@@ -31,6 +31,7 @@
 | [bundle-validate](../.claude/skills/bundle-validate/SKILL.md) | Runs the dev-target bundle validation and the unit tests. |
 | [code-review](../.claude/skills/code-review/SKILL.md) | Starts the read-only reviewer on a diff, on a laptop or in CI. |
 | [create-jira-issue](../.claude/skills/create-jira-issue/SKILL.md) | Makes every Jira issue Claude drafts follow the same five parts: Title, What?, Why?, Technical Tasks and Acceptance Criteria. |
+| [databricks-resource-practices](../.claude/skills/databricks-resource-practices/SKILL.md) | Sets the rules for creating or changing a Databricks resource: declare it in the bundle, validate against dev only, stay in the dev schemas, grant to groups with least privilege, keep secrets out of config, and leave the deploy to a human. |
 | [realtime-patterns](../.claude/skills/realtime-patterns/SKILL.md) | Shows how Nectar's realtime database does something today, as a pattern to mirror and not code to copy. |
 
 ## Agent

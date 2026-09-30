@@ -48,6 +48,12 @@ query across partners except in a test that asserts the second partner
 is absent at L1 and L2. One schema per tenant in the realtime database
 is not the L0/L1/L2 model.
 
+Create or change Databricks resources only as bundle config, validated with
+`--target dev`. Do not create them by hand in the workspace, through ad-hoc
+CLI or SDK calls, and do not deploy. Load the `databricks-resource-practices`
+skill first. Grant to groups with least privilege, run jobs as a service
+principal, and keep secrets out of config.
+
 ## Databricks dev scope (this repo, this exercise)
 
 The live Databricks workspace's `nectar` catalog holds far more than this
