@@ -20,8 +20,8 @@ work ("Add watermark handling to Silver stitching"), not a topic ("Silver").
 One to three sentences: the change or result this issue delivers.
 
 ## Why?
-The reason, with its source: the decision file (e.g. session-7), the design
-note, or the parent ticket. If there is no source, say so instead of inventing
+The reason, with its source: the design doc, the design note, or the parent
+ticket. If there is no source, say so instead of inventing
 one.
 
 ## Technical Tasks
@@ -38,14 +38,14 @@ one.
 
 - **Do not invent.** Correlation keys, the synthetic correlation id, producer
   schemas, the 85-field and 37-field cuts, carrier rules, and thresholds come
-  from signed decision files (`decision-check` skill). If the issue touches
-  one and its decision file is missing or unsigned, put "Blocked by: decision
-  for session N" in **Why?** and do not write tasks that assume an answer.
+  from the design docs (`design-check` skill). If the issue touches one and the
+  design docs do not cover it, put "Blocked by: design doc for <topic>" in
+  **Why?** and do not write tasks that assume an answer.
 - **Acceptance criteria are testable.** "Late legs are attached or explicitly
   unmatched" is checkable; "stitching works well" is not. Use counts, grains
   and named tables, never specific subscriber values.
 - **Data boundary.** No production CDR, phone numbers, SIP URIs, secrets, or
-  Genie result rows in any part. Aggregates and decision-file names only
+  Genie result rows in any part. Aggregates and design-doc names only
   (`jira-guard.sh` blocks a call that contains them).
 - **Only set what was asked.** Do not set assignee, priority, or labels unless
   the engineer named them.

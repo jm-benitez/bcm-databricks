@@ -6,8 +6,10 @@ This repo is a practice run of the AI usage strategy in
 repo. The rules below are copied from that strategy document; edit the rules
 there first, then here.
 
-The design and architecture in this repo is the source of truth. The project
-plan and architecture v3.2-A are not in this repo.
+The design and architecture in this repo is the source of truth. It lives in
+`docs/` and is updated before and during development, starting with
+`docs/architecture_and_design_choices.md`. The project plan and architecture
+v3.2-A are not in this repo.
 
 The realtime database is a separate codebase. Read its procedures as
 evidence of how Nectar stitches and enriches today, and mirror that
@@ -26,18 +28,16 @@ retention are requirements, not tuning knobs.
 
 Do not invent correlation keys, the synthetic correlation id, producer
 schemas, the 85-field or 37-field cut, carrier rules, or threshold
-numbers. If the decision file for that plan session is missing, stop
-and name the session. The one exception today: `docs/decisions/session-7-cross-source-correlation.md`
-is signed, but only as a **labeled test-exercise decision** for this
-practice repo — it is not a real sign-off by the actual solutions architect
-or project manager, and must be re-signed for real before Phase 2.
+numbers. If the design docs do not specify one, stop, say what is missing,
+and propose adding it to `docs/architecture_and_design_choices.md`. Do not
+fill the gap from a realtime-database procedure.
 
 Do not print or write production CDR, phone numbers, or SIP URIs.
 Dev data questions go to the engineering Genie Agent.
 
 Jira (Atlassian MCP) is a shared system: read tickets for context, and
 comment on or update only the ticket the engineer is working on. Every call
-asks first. Post design notes, decision-file names, and aggregates only,
+asks first. Post design notes, design-doc names, and aggregates only,
 never Genie result rows, and do not transition or close a ticket unless
 asked.
 
@@ -96,9 +96,9 @@ data, and only one of them is allowed:
 
 ## Practical habits
 
-- Start a Claude Code session with the decision file and the stage it applies
-  to, not with the whole realtime-database tree.
+- Start a Claude Code session with the relevant design doc and the stage it
+  applies to, not with the whole realtime-database tree.
 - Ask for a plan before an edit when the change touches classification,
   stitching, or Redis.
 - Reject a generated join that cites an Avaya or Diagnostics column unless the
-  decision file names that column.
+  design docs name that column.

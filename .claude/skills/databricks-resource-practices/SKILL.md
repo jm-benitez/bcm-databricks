@@ -32,7 +32,7 @@ YAML mechanics. This skill only adds this repo's rules on top of them.
     (`SELECT` for readers; `MODIFY` only for the service principal that runs the
     job). Do not grant `ALL PRIVILEGES` or `MANAGE` to make an error go away.
   - Never weaken a grant or a row filter, and never add one that lets a partner
-    see another partner (L0/L1/L2 from the signed decision, not a flat
+    see another partner (L0/L1/L2 as the design docs define them, not a flat
     `tenant_id`).
   - Table and column comments are part of the table definition in the repo, not
     edited in the UI. The Genie Agent depends on them.
@@ -43,7 +43,7 @@ YAML mechanics. This skill only adds this repo's rules on top of them.
   a value. Do not run `databricks secrets` commands (they ask first, and the
   answer is almost always no). Do not put a token, host credential or
   connection string in config, tests or a comment.
-- **Compute.** Use serverless unless the design or decision file says otherwise.
+- **Compute.** Use serverless unless the design docs say otherwise.
   Pipelines follow the design (Lakeflow Spark Declarative Pipelines, continuous,
   autoscale on lag). The 60-second SLA and the 90-day Lakebase retention are
   requirements, so a cost or size change that threatens them is not a tuning
@@ -62,9 +62,9 @@ YAML mechanics. This skill only adds this repo's rules on top of them.
 
 ## Steps
 
-1. Name the resource, the layer it belongs to, and the decision file or design
-   section that asks for it. If a decision file is missing, stop and name the
-   session (`decision-check` skill).
+1. Name the resource, the layer it belongs to, and the design doc section
+   that asks for it. If the design docs do not cover it, stop and say what is
+   missing (`design-check` skill).
 2. For a change to classification, stitching, Redis or a grant, present a plan
    and wait for the engineer before editing.
 3. Load the matching `databricks` plugin skill and write the resource in the

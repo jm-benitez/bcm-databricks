@@ -19,27 +19,27 @@
 - `nectar.bronze.users_raw`
 - `nectar.dev_tqaddoumi_tqaddoumi_bronze.nd_qsr`
 
-No Silver or Gold tables exist yet, so only two of the four signed producers
-(SkyConnect, Nectar Diagnostics — see `docs/decisions/session-7-cross-source-correlation.md`)
-have Bronze data today. CoreConnect and Sonus have no tables yet.
+No Silver or Gold tables exist yet. The attached tables hold SkyConnect and
+Nectar Diagnostics data; no CoreConnect or Sonus table is attached.
 
-## Instructions (seeded now that the producer list is signed for this exercise)
+## Instructions (seeded from the design docs)
 
 - A record is one of: CDR, SIP, QoS, device event. Device events are not
   sessions.
-- Producers: SkyConnect (NetSapiens), CoreConnect (Asterisk), Sonus SBC,
-  Nectar Diagnostics — per `docs/decisions/session-7-cross-source-correlation.md`.
-  Only SkyConnect and Nectar Diagnostics have data today.
-- A session is whatever the signed decision says, and only that. For every
-  other plan session (1–5, 8), no decision is signed yet — the agent says it
-  cannot answer session, enrichment, alert-routing, tenancy, or reporting
-  questions until that decision file is signed.
-- Alert type 1 = device event, counted before enrich (Nectar Diagnostics
-  only). Alert type 2 = per-record/registration, post-enrich, pre-stitch.
+- The producer list is not final in the design docs (see
+  `docs/architecture_and_design_choices.md`). Do not state which producers
+  exist beyond the tables attached to this Space.
+- A session is whatever the design docs say, and only that. For every topic
+  the docs have not recorded yet (session definition, enrichment, alert
+  routing, tenancy, reporting), the agent says it cannot answer those
+  questions until the design docs cover them.
+- Alert type 1 = device event, a record type classified at Bronze and counted
+  before enrich. Device events are embedded in producer feeds; Nectar
+  Diagnostics sessions are not excluded from enrich and Silver. Alert type 2 = per-record/registration, post-enrich, pre-stitch.
   Alert type 3 = session score, post-Silver. (No Silver table exists yet, so
   alert type 3 has nothing to compute against today.)
 - Questions are scoped to a named partner and level (L0, L1, L2) once the
-  session-5 tenancy decision exists. Until then, the agent does not have a
+  design docs define the tenancy model. Until then, the agent does not have a
   partner/level model to enforce and should say so rather than guess at one.
 - Column meanings for correlation, watermark, and score come from Unity
   Catalog comments on the attached tables — read those via `databricks
@@ -161,6 +161,8 @@ update-space` with the exported `etag`. Tables, sample questions, title,
 warehouse and folder were left unchanged. The live text is that section with
 one adaptation, because the agent cannot read the repo: the pointers to
 `databricks tables get` was dropped. The
-identifier rule is now in both copies. Wording may drift again on the next
+identifier rule is now in both copies. Git copy updated 2026-10-02 to replace the session and sign-off wording with
+references to the design docs; the live Space still has the earlier wording
+until it is updated with `databricks genie update-space`. Wording may drift again on the next
 edit, so diff with `databricks genie get-space <SPACE_ID>
 --include-serialized-space` when in doubt.

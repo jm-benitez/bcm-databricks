@@ -26,7 +26,7 @@
 
 | Skill | What it is for |
 |---|---|
-| [decision-check](../.claude/skills/decision-check/SKILL.md) | Makes Claude confirm a signed decision or design covers a change to classification, enrich, stitching, score, thresholds or partner filters before it writes code. |
+| [design-check](../.claude/skills/design-check/SKILL.md) | Makes Claude confirm the design docs cover a change to classification, enrich, stitching, score, thresholds or partner filters before it writes code. |
 | [genie-check](../.claude/skills/genie-check/SKILL.md) | Gives the exact `databricks genie` steps for asking the dev Genie Space a question and recording the result. |
 | [bundle-validate](../.claude/skills/bundle-validate/SKILL.md) | Runs the dev-target bundle validation and the unit tests. |
 | [code-review](../.claude/skills/code-review/SKILL.md) | Starts the read-only reviewer on a diff, on a laptop or in CI. |
@@ -61,4 +61,4 @@
 | [ai_usage_strategy.md](ai_usage_strategy.md) | The strategy: which tool does which job, the data boundary, and the review policy. |
 | [genie_agent_instructions.md](genie_agent_instructions.md) | The reviewed git copy of the Genie Space's instructions, with the Space ID and the steps to create one. |
 | [databricks_validation_checklist.md](databricks_validation_checklist.md) | The checklist for re-proving that the Genie scope, deny rules and hooks still hold. |
-| [decisions/](decisions/) | The decision files (one per plan session, plus the field-scope cuts) that Claude must follow and may not invent around. |
+| [architecture_and_design_choices.md](architecture_and_design_choices.md) | The running record of architecture and design choices, updated before and during development, that Claude must follow and may not invent around. |

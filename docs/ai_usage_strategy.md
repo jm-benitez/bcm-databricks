@@ -40,7 +40,7 @@ Operator-facing Genie, the box already drawn on the architecture, is a later pro
 
 ## Source of truth
 
-The design and architecture kept in `bcm` is the source of truth. The project plan and architecture v3.2-A are not added to that repo.
+The design and architecture kept in `bcm` is the source of truth. It lives in `docs/` and is updated before and during development, starting with `docs/architecture_and_design_choices.md`. The project plan and architecture v3.2-A are not added to that repo.
 
 Claude still reads the realtime database procedures. They are the evidence of how Nectar stitches and enriches today, and the new pipeline should mirror that behavior where the design carries it forward. When a procedure and the design disagree, the design wins.
 
@@ -52,7 +52,7 @@ The plan and v3.2-A are how this strategy was scoped. The design in `bcm` is whe
 - Enrichment. The plan’s enrich list is hierarchy, geo, carrier, and codec, with hot reload. Carrier is on the plan and absent from the realtime database.
 - Acceptance. Cross-source stitching has signed test scenarios. Phase 2 QA covers schema mapping for all three CDRs, stitching, alert types 1–3, L0/L1/L2 isolation, a 48-hour run at 35 million records a day, and an end-to-end pass. Phase 3 adds live completeness, leg counts, and correlation rates. Lakebase is a 60-second SLA and 90-day partitions.
 
-Until the producer list is confirmed, Claude may discuss the pipeline shape and may extract patterns from the realtime database. It may not invent field mappings, the 85-field or 37-field cut, correlation keys, or Genie instructions for a named producer.
+Until the design records the producers and schemas, Claude may discuss the pipeline shape and may extract patterns from the realtime database. It may not invent field mappings, the 85-field or 37-field cut, correlation keys, or Genie instructions for a named producer.
 
 ## What Claude may learn from the realtime database
 
@@ -60,14 +60,14 @@ The realtime database is Nectar’s current PostgreSQL store. It already impleme
 
 | Logic in the realtime database | Pattern worth keeping | Where it lands in v3.2-A | Rule for Claude |
 |---|---|---|---|
-| `pr_u_dm_build_*` and the dictionary lists on `i_uplatforms` (codec, response codes, geo from IP, users, client version, devices, platform servers) | Enrich by joining a session to reference data, per platform | ENRICH, broadcast / Delta joins | Extract the join list into a design note. Carrier and route are not in the realtime database; do not add them until discovery confirms them. |
-| `pr_ncj_build_diagnostics` | Group legs by `correlation_id` (stitching type 1). Merge a single-leg group into another journey on `ucd_correlation_id` (stitching type 3). Skip legs already attached to another journey. | SILVER session assembly, unmatched and late records | Use the two-step shape. The BCM correlation key is a discovery output, not `correlation_ids[1]`. |
+| `pr_u_dm_build_*` and the dictionary lists on `i_uplatforms` (codec, response codes, geo from IP, users, client version, devices, platform servers) | Enrich by joining a session to reference data, per platform | ENRICH, broadcast / Delta joins | Extract the join list into a design note. Carrier and route are not in the realtime database; do not add them until the design records them. |
+| `pr_ncj_build_diagnostics` | Group legs by `correlation_id` (stitching type 1). Merge a single-leg group into another journey on `ucd_correlation_id` (stitching type 3). Skip legs already attached to another journey. | SILVER session assembly, unmatched and late records | Use the two-step shape. The BCM correlation key is a design output, not `correlation_ids[1]`. |
 | `pr_ncj_build_avaya` (`AVAYA_NECTAR_DIAGNOSTICS`) | Two sources, clock skew (`fn_svc_ncj_avaya_nd_time_shift`), optional stitch by user, a buffer for related sessions | SILVER cross-source correlation. The plan’s version of this task is SkyConnect + CoreConnect assembly, then Sonus joined with a synthetic `correlation_id` | Cite it as the existing cross-source stitch. Do not copy Avaya or Diagnostics keys onto the plan’s sources, and do not invent the synthetic id. |
-| `pr_ncj_load`, `pr_ncj_summary_build`, `pr_summary_dm_build` | Build journeys, then a summary grain, on a schedule with chunking and run logs | GOLD. The plan fixes Phase 1 at 4–5 rollup views and 3–4 dashboards, each at L0, L1, and L2 | Draft aggregates only after session 8 signs that grain. |
-| Nectar score functions and threshold configuration in the realtime database | A score and a threshold exist as data, not as constants in a query | SCORE, the threshold table, alert type 3 | Implement scoring from a signed threshold spec. |
+| `pr_ncj_load`, `pr_ncj_summary_build`, `pr_summary_dm_build` | Build journeys, then a summary grain, on a schedule with chunking and run logs | GOLD. The plan fixes Phase 1 at 4–5 rollup views and 3–4 dashboards, each at L0, L1, and L2 | Draft aggregates only after the design records that grain. |
+| Nectar score functions and threshold configuration in the realtime database | A score and a threshold exist as data, not as constants in a query | SCORE, the threshold table, alert type 3 | Implement scoring from the threshold spec in the design docs. |
 | QuickSight definitions in the realtime database | Questions the current UI already asks | A question to ask the engineering Genie Agent | Turn a question into a Genie question. Do not port the SQL dialect unchanged. |
 
-Alert workers, Redis, and EventBridge stay as they are. The plan’s discovery task for that area is a review of the existing Nectar alert worker and a key design (namespaces `device`, per-record, per-session; cooldown; leader election; EventBridge routing by alert type). Claude may draft that design from notes a human took in sessions 3 and 4. It does not redesign the workers in this phase.
+Alert workers, Redis, and EventBridge stay as they are. The plan’s discovery task for that area is a review of the existing Nectar alert worker and a key design (namespaces `device`, per-record, per-session; cooldown; leader election; EventBridge routing by alert type). Claude may draft that design from notes a human recorded in `docs/`. It does not redesign the workers in this phase.
 
 ## How the three tools split the work
 
@@ -79,29 +79,29 @@ Genie is how any of them look at rows. An engineer asking “how many device eve
 
 ### Discovery
 
-This is Phase 1 of the project plan (14–28 Sep 2026). The solutions architect and the project manager run the sessions. Data engineers and QA use Claude to prepare and to file what the session decided. Claude does not attend for them, and it does not close a session.
+This is Phase 1 of the project plan (14–28 Sep 2026). Data engineers and QA use Claude to prepare discovery notes: pattern notes from the realtime database and lists of open questions. Architecture and design choices are recorded in `bcm/docs/` as they are made, before and during development, and folded into the design. The design is the source of truth. There is no sign-off gate: a choice is usable once it is written in the design docs, and it can be revised there as development teaches the team more.
 
-Each session becomes one decision file in `bcm/docs/decisions/` before any build task that depends on it:
+The topics the design still has to record are listed in `docs/architecture_and_design_choices.md`, each with what Claude may prepare beforehand:
 
-| Plan session | Decision file records | Claude’s preparation |
+| Topic | The design records | Claude’s preparation |
 |---|---|---|
-| 1 — Stitching, session definition, SIP leg rules | What a session is, which legs belong, what stays unmatched | Pattern note from `pr_ncj_build_diagnostics` and `pr_ncj_build_avaya` |
-| 2 — Enrichment: geo, carrier, codec, tagging | Which reference joins are in Phase 1, including carrier | Join list from `i_uplatforms`, with carrier marked absent from the realtime database |
-| 3 — Existing Nectar alert types | What the current worker already fires | Outline of score and threshold functions in the realtime database, for the reviewer to confirm |
-| 4 — Thresholds, windows, routing | Threshold table fields, windows, cooldown, EventBridge route per alert type | Empty key-design template: namespace, TTL, idempotency key |
-| 5 — L0/L1/L2, partners and customers | The three-level row filter and who sits at each level | Nothing from the realtime database. Tenancy there is one schema per tenant, which is a different model |
-| 6 — UI requirements | Owned outside this strategy. The file is an input when it changes a Lakebase query | No Claude session for the UI team under this document |
-| 7 — Conversation Journey, cross-source correlation | How SkyConnect, CoreConnect, and Sonus (or the confirmed producer list) become one journey, including the synthetic `correlation_id` | The Avaya + Diagnostics stitch as a pattern, with its keys stripped out |
-| 8 — Reporting | The 4–5 rollups and 3–4 dashboards, at L0/L1/L2 | Candidate grains from `pr_ncj_summary_build` and the QuickSight questions, labeled as candidates |
+| Stitching, session definition, SIP leg rules | What a session is, which legs belong, what stays unmatched | Pattern note from `pr_ncj_build_diagnostics` and `pr_ncj_build_avaya` |
+| Enrichment: geo, carrier, codec, tagging | Which reference joins are in Phase 1, including carrier | Join list from `i_uplatforms`, with carrier marked absent from the realtime database |
+| Existing Nectar alert types | What the current worker already fires | Outline of score and threshold functions in the realtime database, for the reviewer to confirm |
+| Thresholds, windows, routing | Threshold table fields, windows, cooldown, EventBridge route per alert type | Empty key-design template: namespace, TTL, idempotency key |
+| L0/L1/L2, partners and customers | The three-level row filter and who sits at each level | Nothing from the realtime database. Tenancy there is one schema per tenant, which is a different model |
+| UI requirements | Owned outside this strategy. The written outcome is an input when it changes a Lakebase query | No Claude work for the UI team under this document |
+| Conversation Journey, cross-source correlation | How SkyConnect, CoreConnect, and Sonus (or the confirmed producer list) become one journey, including the synthetic `correlation_id` | The Avaya + Diagnostics stitch as a pattern, with its keys stripped out |
+| Reporting | The 4–5 rollups and 3–4 dashboards, at L0/L1/L2 | Candidate grains from `pr_ncj_summary_build` and the QuickSight questions, labeled as candidates |
 
-Two plan tasks sit beside the sessions and also need a decision file: the SkyConnect cut from the full feed to 85 hot-store fields (the rest archived cold), and the CoreConnect mediation levels that define the 37-field schema. Schema Registry review of all three CDR schemas is the check that those files match the topics.
+Two plan tasks sit beside these topics and are recorded the same way: the SkyConnect cut from the full feed to 85 hot-store fields (the rest archived cold), and the CoreConnect mediation levels that define the 37-field schema. Schema Registry review of all three CDR schemas is the check that those entries match the topics.
 
 Claude Code may:
 
-- Draft the pattern note and the question list for a session before it happens.
-- After a human writes the outcome, file it under `bcm/docs/decisions/` and fold it into the design. The design is the source of truth.
+- Draft the pattern note and the question list for a topic before the team works it out.
+- After a human writes the outcome, add it to the design docs under `bcm/docs/` and fold it into the design. The design is the source of truth.
 
-Claude Code may not mark a discovery question answered by generalizing from Avaya, Genesys, Webex Calling, or Diagnostics, and it may not pick SkyConnect over Nectar Diagnostics or the reverse.
+Claude Code may not mark a design question answered by generalizing from Avaya, Genesys, Webex Calling, or Diagnostics, and it may not pick SkyConnect over Nectar Diagnostics or the reverse.
 
 QA lists the plan’s acceptance rows in this phase, on paper: classification and field mapping, enrich, each alert type, stitched session, unmatched legs, late legs, and a second partner invisible at L1/L2. QA asks them of the engineering agent, ticket by ticket, once dev tables exist.
 
@@ -117,14 +117,14 @@ Claude Code drafts the pipeline layout to match v3.2-A, and only that layout:
 - SCORE and SILVER reload thresholds from the Delta threshold table. Alert workers reload the same table through Redis.
 - Redis writes are idempotent on `batch_id`, with a separate namespace per alert type.
 - Lakebase reads Silver through LTAP. There is no JDBC sync job.
-- GOLD is the signed rollup grain from session 8: 4–5 rollups, each readable at L0, L1, and L2. ML and the threshold publish path stay downstream of GOLD.
+- GOLD is the rollup grain recorded in the design: 4–5 rollups, each readable at L0, L1, and L2. ML and the threshold publish path stay downstream of GOLD.
 - Reference Delta tables cover carrier, codec, and geo, refreshed on the plan’s pipeline, and broadcast into ENRICH with hot reload.
 
 A human reviews the design note before implementation starts. The notebook assistant can be used here to try a join against dev reference data. The resulting SQL is copied into `bcm` through Claude Code or by hand, in a merge request.
 
 ### Development
 
-Phase 2 of the plan (5 Oct – 7 Dec 2026) is the build. Claude Code implements from the signed decision and the design note.
+Phase 2 of the plan (5 Oct – 7 Dec 2026) is the build. Claude Code implements from the design docs.
 
 QA verifies the implementation of each ticket by asking the engineering agent questions about the tables that ticket produced. Claude does not declare a ticket verified. QA does, from those answers and the automated tests.
 
@@ -132,7 +132,7 @@ When a stage is in the dev catalog, the author asks the engineering agent verifi
 
 ### Tests
 
-Acceptance checks come from the signed decisions and from the plan’s QA rows. Claude Code writes the automated tests for the rows that can pass on synthetic data. After each dev deploy, QA asks the engineering agent questions to verify the implementation of the ticket.
+Acceptance checks come from the design docs and from the plan’s QA rows. Claude Code writes the automated tests for the rows that can pass on synthetic data. After each dev deploy, QA asks the engineering agent questions to verify the implementation of the ticket.
 
 Test inputs checked into `bcm` are synthetic. They cover a multi-leg call, a device event, a registration failure, a late leg, an unmatched leg, a Sonus timestamp that is not UTC, a SkyConnect field that belongs in the cold archive and must be absent from the hot Bronze table, and a second partner that must be invisible at L1 and L2.
 
@@ -174,10 +174,10 @@ Create one agent in the dev workspace.
 - Share it with data engineers and QA. Each person asks as themselves, so Unity Catalog row filters apply to them.
 - Instructions live in the agent and are copied into `bcm/docs/genie_agent_instructions.md` so they are reviewed in git. The workspace copy is what Genie runs. The git copy is what the team reviews. They are updated in the same merge request.
 
-Instructions to seed once the producer list is confirmed:
+Instructions to seed once the producers are recorded in the design docs:
 
 - A record is one of: CDR, SIP, QoS, device event. Device events are not sessions.
-- A session is whatever the signed decision says, and only that. Until the decision exists, the agent says it cannot answer session questions.
+- A session is whatever the design docs say, and only that. Until the docs define it, the agent says it cannot answer session questions.
 - Alert type 1 is a device event, counted before enrich. Alert type 2 is a per-record or registration result after enrich and before stitching. Alert type 3 is a session score after Silver.
 - Questions are scoped to a named partner and level (L0, L1, or L2). If the question names neither, the agent asks. A query that can see another partner at L1 or L2 is a wrong answer.
 - Column meanings for correlation, watermark, and score come from Unity Catalog comments. Those comments are maintained in `bcm` with the table definitions.
@@ -192,7 +192,7 @@ Claude Code is connected to this agent with the Databricks Genie connector, auth
 
 Claude Code, the review job, and the notebook assistant may receive:
 
-- Pipeline code, design notes, and signed decisions.
+- Pipeline code and design docs.
 - Unity Catalog names, column comments, and table DDL.
 - Synthetic rows written for tests.
 - Aggregates that contain no phone number, SIP URI, or other subscriber identifier (row counts, error rates, delay distributions).
@@ -211,7 +211,7 @@ Whoever owns data handling for BCM accepts or replaces this default before the f
 
 ## Claude Code rules
 
-These rules are an initial suggestion. Adjust them when the final design documents are locked, and polish them during development.
+These rules are an initial suggestion. Adjust them as the design docs evolve, and polish them during development.
 
 They are copied into `bcm/CLAUDE.md`. Edits to the rules happen in this strategy first, while they are being reviewed, and move to `bcm/CLAUDE.md` once approved. That file is the copy Claude Code loads. This document stays the explanation.
 
@@ -237,8 +237,9 @@ retention are requirements, not tuning knobs.
 
 Do not invent correlation keys, the synthetic correlation id, producer
 schemas, the 85-field or 37-field cut, carrier rules, or threshold
-numbers. If the decision file for that plan session is missing, stop
-and name the session.
+numbers. If the design docs do not specify one, stop, say what is
+missing, and propose adding it to docs/architecture_and_design_choices.md.
+Do not fill the gap from a realtime-database procedure.
 
 Do not print or write production CDR, phone numbers, or SIP URIs.
 Dev data questions go to the engineering Genie Agent.
@@ -259,9 +260,9 @@ is not the L0/L1/L2 model.
 
 Practical habits that go with those rules:
 
-- Start a Claude Code session with the decision file and the stage it applies to, not with the whole realtime-database tree.
+- Start a Claude Code session with the relevant design doc and the stage it applies to, not with the whole realtime-database tree.
 - Ask for a plan before an edit when the change touches classification, stitching, or Redis.
-- Reject a generated join that cites an Avaya or Diagnostics column unless the decision file names that column.
+- Reject a generated join that cites an Avaya or Diagnostics column unless the design docs name that column.
 
 ## Claude Code setup
 
@@ -280,7 +281,7 @@ Two MCP servers are connected, using Databricks’ current Claude Code login (`u
 
 A GitLab server scoped to project `bcm` is connected so Claude can open the merge request the engineer is already making. It cannot approve, merge, or change protected-branch settings.
 
-An Atlassian server (`.mcp.json`, remote MCP, OAuth in the browser as the engineer) gives Claude read and write access to Jira, so it can read a ticket for context and comment on or update the ticket the engineer is working on. Every call to it asks the engineer first (`permissions.ask`), and a `PreToolUse` hook (`.claude/hooks/jira-guard.sh`) refuses a call whose input holds a phone number, SIP URI, secret, or the production catalog name. Jira is a shared system, so anything Claude writes there is published to everyone who can see the ticket. Claude posts only what the data boundary already allows: design notes, decision-file names, and aggregates. It does not paste Genie result rows, and it does not transition or close a ticket unless the engineer asked for that.
+An Atlassian server (`.mcp.json`, remote MCP, OAuth in the browser as the engineer) gives Claude read and write access to Jira, so it can read a ticket for context and comment on or update the ticket the engineer is working on. Every call to it asks the engineer first (`permissions.ask`), and a `PreToolUse` hook (`.claude/hooks/jira-guard.sh`) refuses a call whose input holds a phone number, SIP URI, secret, or the production catalog name. Jira is a shared system, so anything Claude writes there is published to everyone who can see the ticket. Claude posts only what the data boundary already allows: design notes, design-doc names, and aggregates. It does not paste Genie result rows, and it does not transition or close a ticket unless the engineer asked for that.
 
 Permission denies in `.claude/settings.json` refuse, for every engineer:
 
@@ -294,7 +295,7 @@ Skills are the extra instructions Claude loads when the task matches. They live 
 
 | Skill | Loads when | What it tells Claude |
 |---|---|---|
-| `decision-check` | A change touches classification, enrich, stitching, score, thresholds, or partner filters | The design in this repo is what to implement. A discovery note explains a choice the design has not absorbed yet. Stop and name the gap if neither records it |
+| `design-check` | A change touches classification, enrich, stitching, score, thresholds, or partner filters | The design docs in `docs/` are what to implement. If they do not cover the change, stop, say what is missing, and propose the text to add |
 | `realtime-patterns` | Someone asks how Nectar does this today | The procedure map in this document: what to copy as a pattern, and which columns stay behind |
 | `genie-check` | A change is ready to check against dev data | How to ask the engineering agent, and how to update the agent instructions in the same change |
 | `bundle-validate` | Tests or the Databricks bundle need a run | The dev-target validate command and the unit-test command. Production deploy is not in the skill |
@@ -330,33 +331,33 @@ Streaming rules stay in `CLAUDE.md` rather than a skill per pipeline stage. Ther
 | | Discovery | Design | Development | Merge request |
 |---|---|---|---|---|
 | Tools | Read, Unity Catalog metadata | Read, Write, Unity Catalog metadata | Edit, Write, Bash, Genie, Unity Catalog | GitLab, to open the request. The review job is CI, not these tools |
-| Skills | `realtime-patterns`, `decision-check` | `decision-check` | `decision-check`, `genie-check`, `databricks-resource-practices`, `bundle-validate`, `create-jira-issue`, then `code-review` before the request is opened | `code-review`, loaded by the CI job from the checkout |
+| Skills | `realtime-patterns`, `design-check` | `design-check` | `design-check`, `genie-check`, `databricks-resource-practices`, `bundle-validate`, `create-jira-issue`, then `code-review` before the request is opened | `code-review`, loaded by the CI job from the checkout |
 | Hooks | `SessionStart`, `UserPromptSubmit` | Those, plus `PreToolUse` | The full set, including `Stop` | The CI job is comment-only, so `PreToolUse` still blocks a deploy or a secret read if that job’s prompt goes wide |
 
 ## Merge request review
 
-The engineer runs `code-review` on the diff before opening the merge request. The skill starts the read-only reviewer, which reads the diff, `CLAUDE.md`, and the decision files the change touches. It has no warehouse connection and does not push. The engineer fixes what they accept, then opens the request.
+The engineer runs `code-review` on the diff before opening the merge request. The skill starts the read-only reviewer, which reads the diff, `CLAUDE.md`, and the design docs the change touches. It has no warehouse connection and does not push. The engineer fixes what they accept, then opens the request.
 
 The same checklist runs again in GitLab CI on project `bcm`, on `merge_request_event` only. Claude Code’s GitLab CI integration is the implementation to follow; it is a vendor beta, so the job is pinned to a known CLI version and treated as replaceable. The CI job and the skill share this list so the two reviews do not drift.
 
 The job is comment-only. It posts one note on the merge request. It does not push commits, open a follow-up branch, or apply suggestions. An `@claude` mention that implements code is a separate, later choice and is not part of this strategy.
 
-The job receives the diff, the list of changed files, `CLAUDE.md`, and the decision files those paths touch. It does not receive a warehouse connection. Diffs over a fixed size, and generated files, are skipped with a note that says the review was skipped.
+The job receives the diff, the list of changed files, `CLAUDE.md`, and the design docs those paths touch. It does not receive a warehouse connection. Diffs over a fixed size, and generated files, are skipped with a note that says the review was skipped.
 
 The review looks for:
 
-- A producer field mapping or correlation key with no decision file.
+- A producer field mapping or correlation key that the design docs do not record.
 - Device events sent through enrich or Silver.
 - Alert type 2 implemented after Silver, or alert type 3 implemented before Silver.
 - A Redis write that can double-count when a batch is retried.
 - Silver with no watermark behavior and no unmatched path.
 - A JDBC or other copy into Lakebase.
-- SQL missing an L0/L1/L2 predicate, or a predicate that treats tenancy as one flat tenant id when the decision file describes three levels.
-- A hot Bronze column the SkyConnect decision file assigned to the cold archive, or a CoreConnect column outside the signed 37-field set.
-- A Sonus timestamp kept in a local zone, or a synthetic `correlation_id` whose formula is not the session 7 decision.
+- SQL missing an L0/L1/L2 predicate, or a predicate that treats tenancy as one flat tenant id when the design docs describe three levels.
+- A hot Bronze column the design assigns to the cold archive, or a CoreConnect column outside the 37-field set in the design docs.
+- A Sonus timestamp kept in a local zone, or a synthetic `correlation_id` whose formula is not the one in the design docs.
 - A production catalog name, a secret, or a sample that looks like a real phone number or SIP URI.
 - A behavior change with no test.
-- Logic copied from `pr_ncj_build_avaya` or `pr_u_dm_build_*` column names that the decision file does not adopt.
+- Logic copied from `pr_ncj_build_avaya` or `pr_u_dm_build_*` column names that the design docs do not adopt.
 
 The reviewer also checks that automated tests exist for the code being changed or added. For each changed path it reports whether a test in the diff covers it, only an untouched existing test covers it, or no test was found. A changed behavior with no test, or an existing test the change has made stale, is blocking.
 
@@ -376,7 +377,7 @@ Pipeline code that will run on a schedule is written in `bcm` and reviewed on a 
 
 | Check | Who writes it | Who runs it | Pass means |
 |---|---|---|---|
-| Classification, UTC timestamps, 85-field and 37-field scope, correlation, idempotent score, L0/L1/L2 filter | Claude Code from a signed decision; author edits | GitLab CI on the merge request | The synthetic fixtures produce the expected rows |
+| Classification, UTC timestamps, 85-field and 37-field scope, correlation, idempotent score, L0/L1/L2 filter | Claude Code from the design docs; author edits | GitLab CI on the merge request | The synthetic fixtures produce the expected rows |
 | Databricks bundle validates | Author | GitLab CI | The asset bundle loads |
 | Claude review | The review policy in this document | GitLab CI, comment only | Author has answered every item they marked blocking |
 | Human review | A data engineer or QA who did not author the change | GitLab approval | The approver accepts the decision and the diff |
@@ -388,10 +389,10 @@ The plan’s build starts the week of 5 Oct 2026, after the discovery readout. B
 
 1. Read this document, the v3.2-A diagram, and the project plan’s Phase 1 and Phase 2 rows.
 2. Accept or replace the two open defaults (data boundary, non-blocking review).
-3. File the producer-list decision. The diagram and the plan disagree, and every later schema task depends on that file.
+3. Record the producer list in the design docs. The diagram and the plan disagree, and every later schema task depends on it.
 4. Add `CLAUDE.md`, `.claude/settings.json`, `.claudeignore`, the read-only reviewer, the seven skills, the MCP servers, and the review job to the existing `bcm` repository, and turn on branch protection that requires one human approval. Use of the repository starts with that change.
-5. Open empty decision files for sessions 1 through 5, 7, and 8, plus the SkyConnect hot/cold cut and the CoreConnect 37-field scope, so a Claude session has somewhere to stop.
+5. Seed `docs/architecture_and_design_choices.md` with the producer list and the open design topics, so a Claude session has somewhere to read from and to record into.
 6. Create the empty engineering Genie Agent in dev, shared with this group, with no tables attached yet.
 7. Connect Claude Code to that agent from one engineer’s machine and confirm a permissions failure on a production catalog, so the boundary is real.
 
-Phase 2 merge requests follow the lifecycle above. New people read this document, the plan, and `bcm/CLAUDE.md` before their first Claude Code session. Session 6 and the UI team’s Lakebase work stay outside this strategy. Their written outcome is still an input when it changes a query.
+Phase 2 merge requests follow the lifecycle above. New people read this document, the plan, and `bcm/CLAUDE.md` before their first Claude Code session. The UI team’s Lakebase work stays outside this strategy. Their written outcome is still an input when it changes a query.

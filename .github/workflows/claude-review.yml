@@ -34,7 +34,7 @@ jobs:
 
             Load .claude/skills/code-review/SKILL.md and follow it exactly,
             delegating to the .claude/agents/code-reviewer.md checklist. Read
-            CLAUDE.md and every docs/decisions/*.md file this PR's changed
+            CLAUDE.md and every design doc under docs/ that this PR's changed
             files touch.
 
             If the diff is unusually large or touches only generated files,

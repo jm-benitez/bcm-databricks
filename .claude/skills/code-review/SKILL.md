@@ -4,7 +4,7 @@ description: Use when a diff is ready to review, on the engineer's machine or in
 ---
 
 Start the read-only `code-reviewer` subagent (`.claude/agents/code-reviewer.md`)
-and give it the diff, `CLAUDE.md`, and the `docs/decisions/*.md` files the
+and give it the diff, `CLAUDE.md`, and the design docs under `docs/` that the
 changed paths touch. It applies the checklist in that agent file, checks that
 tests exist for the code being changed, and returns Blocking / Questions /
 Test coverage / Other observations / Not reviewed. Other observations holds
